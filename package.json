@@ -1,0 +1,38 @@
+{
+  "name": "aoles-gl-react-demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@aoles-gl/core": "file:../aoles-gl-web-package/packages/core",
+    "@aoles-gl/react": "file:../aoles-gl-web-package/packages/react",
+    "@ctrl/tinycolor": "^4.2.0",
+    "@floating-ui/react": "^0.26.0",
+    "axios": "^1.15.0",
+    "i18next": "^23.7.0",
+    "lodash-es": "^4.17.21",
+    "opfs-tools": "^0.4.1",
+    "react": "^18.2.0",
+    "react-colorful": "^5.6.1",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^14.0.0",
+    "react-moveable": "^0.56.0",
+    "srt-parser-2": "^1.2.3",
+    "wavesurfer.js": "^7.7.11",
+    "zod": "^4.2.1",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8"
+  }
+}
