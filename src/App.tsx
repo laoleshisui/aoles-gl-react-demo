@@ -1,45 +1,100 @@
-import React from 'react';
-import { ControllerPreview, useEngine } from '@aoles-gl/react';
-import ResourcePanel from './components/ResourcePanel';
+import {
+  usePageState,
+  usePreviewState,
+  usePageDarkMode,
+  PreviewContainer,
+  TrackContainer,
+  ResourceContainer,
+  AttributeContainer,
+} from '@aoles-gl/react';
 import './App.css';
 
-function App() {
-  const engine = useEngine();
+function AppContent() {
+  const pageStore = usePageState();
+  const previewStore = usePreviewState();
+
+  // Sync dark mode to <html> element
+  usePageDarkMode(pageStore);
+
+  const isDark = pageStore((state: any) => state.isDark as boolean);
+  const setIsDark = pageStore.getState().setIsDark;
+
+  const wasmRuntimeInited = previewStore(
+    (state: any) => state.wasmRuntimeInited as boolean
+  );
 
   return (
-    <div className="editor-root">
-      <div className="main-content">
-        {/* Left: Resource Panel */}
-        <div className="card-style resources-section">
-          <ResourcePanel />
+    <div className={`editor-root ${isDark ? 'dark' : ''}`}>
+      {/* Header */}
+      <div className="header-bar">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+            </svg>
+          </div>
+          <span className="font-semibold text-gray-900 dark:text-white">Aoles GL React</span>
         </div>
 
-        {/* Right: Main Area */}
+        <div className="flex items-center gap-3">
+          {!wasmRuntimeInited && (
+            <span className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+              <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Loading WASM...
+            </span>
+          )}
+          {wasmRuntimeInited && (
+            <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              WASM Ready
+            </span>
+          )}
+
+          <button
+            onClick={() => setIsDark(!isDark)}
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            title="Toggle dark mode"
+          >
+            {isDark ? (
+              <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Main layout */}
+      <div className="main-content">
+        {/* Left: Resources */}
+        <ResourceContainer className="resources-section card-style" />
+
+        {/* Right: Preview + Attr + Track */}
         <div className="right-section">
           {/* Top: Preview + Attributes */}
           <div className="preview-attr-row">
-            <div className="card-style preview-section">
-              <ControllerPreview />
-            </div>
-            <div className="card-style attr-section">
-              <div className="p-4 text-center text-gray-500">
-                <p>Attribute Panel</p>
-                <p className="text-sm mt-2">(Implementation in progress)</p>
-              </div>
-            </div>
+            <PreviewContainer className="preview-section card-style" />
+            <AttributeContainer className="attr-section card-style" />
           </div>
 
-          {/* Bottom: Track Timeline */}
-          <div className="card-style track-section">
-            <div className="p-4 text-center text-gray-500">
-              <p>Track Timeline</p>
-              <p className="text-sm mt-2">(Implementation in progress)</p>
-            </div>
-          </div>
+          {/* Bottom: Track timeline */}
+          <TrackContainer className="track-section card-style" />
         </div>
       </div>
     </div>
   );
+}
+
+function App() {
+  return <AppContent />;
 }
 
 export default App;

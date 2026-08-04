@@ -14,9 +14,22 @@ html, body {
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  padding: 16px;
-  padding-bottom: 0;
+  padding: 8px 16px 0;
   box-sizing: border-box;
+  overflow: hidden;
+}
+
+.dark.editor-root, .dark .editor-root {
+  background: linear-gradient(135deg, #111827 0%, #030712 100%);
+}
+
+.header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  flex-shrink: 0;
+  margin-bottom: 8px;
 }
 
 .dark .editor-root {
