@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { useEngine } from '@aoles-gl/react';
-import createTrackPipeline from '@aoles-gl/react';
-import { useTrackStore } from '@aoles-gl/react';
-import { usePreviewState } from '@aoles-gl/react';
+import {
+  useEngine,
+  createTrackPipeline,
+  useTrackStore,
+  usePreviewState
+} from '@aoles-gl/react';
 
 function ResourcePanel() {
   const engine = useEngine();
