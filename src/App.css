@@ -11,6 +11,8 @@ html, body {
 
 .editor-root {
   height: 100vh;
+  width: 100vw;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -55,6 +57,7 @@ html, body {
   flex-direction: row;
   overflow: hidden;
   gap: 16px;
+  min-width: 0;
 }
 
 .resources-section {
@@ -105,9 +108,49 @@ html, body {
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .main-content,
+  .resources-section {
+    width: 200px !important;
+  }
+
+  .attr-section {
+    width: 300px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .main-content {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .resources-section {
+    width: 100% !important;
+    height: 180px;
+    flex-shrink: 0;
+  }
+
+  .right-section {
+    width: 100%;
+    flex: none;
+    overflow: visible;
+  }
+
   .preview-attr-row {
-    flex-direction: column !important;
+    height: auto;
+    flex: none;
+    flex-direction: column;
+  }
+
+  .preview-section {
+    height: 280px;
+    min-height: 280px;
+    flex: none;
+  }
+
+  .attr-section {
+    width: 100% !important;
+    height: 240px;
+    flex: none;
   }
 }
 
