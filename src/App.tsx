@@ -6,6 +6,7 @@ import {
   TrackContainer,
   ResourceContainer,
   AttributeContainer,
+  ResizablePanel,
 } from '@aoles-gl/react';
 import './App.css';
 
@@ -17,7 +18,11 @@ function AppContent() {
   usePageDarkMode(pageStore);
 
   const isDark = pageStore((state: any) => state.isDark as boolean);
+  const attrWidth = pageStore((state: any) => state.attrWidth as number);
+  const trackHeight = pageStore((state: any) => state.trackHeight as number);
   const setIsDark = pageStore.getState().setIsDark;
+  const setAttrWidth = pageStore.getState().setAttrWidth;
+  const setTrackHeight = pageStore.getState().setTrackHeight;
 
   const wasmRuntimeInited = previewStore(
     (state: any) => state.wasmRuntimeInited as boolean
@@ -82,11 +87,31 @@ function AppContent() {
           {/* Top: Preview + Attributes */}
           <div className="preview-attr-row">
             <PreviewContainer className="preview-section card-style" />
-            <AttributeContainer className="attr-section card-style" />
+            <ResizablePanel
+              className="attr-resizable"
+              direction="vertical"
+              edge="left"
+              size={attrWidth}
+              minSize={300}
+              maxSize={600}
+              onSizeChange={setAttrWidth}
+            >
+              <AttributeContainer className="attr-section card-style" />
+            </ResizablePanel>
           </div>
 
           {/* Bottom: Track timeline */}
-          <TrackContainer className="track-section card-style" />
+          <ResizablePanel
+            className="track-resizable"
+            direction="horizontal"
+            edge="top"
+            size={trackHeight}
+            minSize={200}
+            maxSize={800}
+            onSizeChange={setTrackHeight}
+          >
+            <TrackContainer className="track-section card-style" />
+          </ResizablePanel>
         </div>
       </div>
     </div>

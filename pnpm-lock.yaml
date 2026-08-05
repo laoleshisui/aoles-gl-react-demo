@@ -124,6 +124,9 @@ importers:
       '@aoles-gl/theme':
         specifier: workspace:*
         version: link:../theme
+      '@aoles-gl/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@ctrl/tinycolor':
         specifier: ^4.0.0
         version: 4.2.0
@@ -240,6 +243,18 @@ importers:
         specifier: ^3.7.0
         version: 3.9.1(rollup@4.62.4)(supports-color@8.1.1)(typescript@5.3.3)(vite@5.4.21(sass@1.102.0))
 
+  ../aoles-gl-web-package/packages/ui:
+    devDependencies:
+      typescript:
+        specifier: ~5.3.0
+        version: 5.3.3
+      vite:
+        specifier: ^5.0.0
+        version: 5.4.21(sass@1.102.0)
+      vite-plugin-dts:
+        specifier: ^3.7.0
+        version: 3.9.1(rollup@4.62.4)(supports-color@8.1.1)(typescript@5.3.3)(vite@5.4.21(sass@1.102.0))
+
   ../aoles-gl-web-package/packages/vue:
     dependencies:
       '@aoles-gl/core':
@@ -248,6 +263,9 @@ importers:
       '@aoles-gl/theme':
         specifier: workspace:*
         version: link:../theme
+      '@aoles-gl/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@ckpack/vue-color':
         specifier: ^1.4.0
         version: 1.6.0(vue@3.5.40(typescript@5.3.3))
@@ -3986,6 +4004,7 @@ snapshots:
       '@ant-design/icons': 6.3.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@aoles-gl/core': link:../aoles-gl-web-package/packages/core
       '@aoles-gl/theme': link:../aoles-gl-web-package/packages/theme
+      '@aoles-gl/ui': link:../aoles-gl-web-package/packages/ui
       '@ctrl/tinycolor': 4.2.0
       '@floating-ui/react': 0.26.28(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       antd: 6.5.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
