@@ -9,10 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.3.2",
     "@aoles-gl/core": "file:../aoles-gl-web-package/packages/core",
     "@aoles-gl/react": "file:../aoles-gl-web-package/packages/react",
     "@ctrl/tinycolor": "^4.2.0",
     "@floating-ui/react": "^0.26.0",
+    "antd": "^6.5.3",
     "axios": "^1.15.0",
     "i18next": "^23.7.0",
     "lodash-es": "^4.17.21",
