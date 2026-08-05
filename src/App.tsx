@@ -33,12 +33,12 @@ function AppContent() {
               <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
             </svg>
           </div>
-          <span className="font-semibold text-gray-900 dark:text-white">Aoles GL React</span>
+          <span className="header-title font-semibold">Aoles GL React</span>
         </div>
 
         <div className="flex items-center gap-3">
           {!wasmRuntimeInited && (
-            <span className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+            <span className="runtime-status runtime-status-loading text-sm flex items-center gap-1">
               <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -46,7 +46,7 @@ function AppContent() {
             </span>
           )}
           {wasmRuntimeInited && (
-            <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+            <span className="runtime-status runtime-status-ready text-sm flex items-center gap-1">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -56,7 +56,7 @@ function AppContent() {
 
           <button
             onClick={() => setIsDark(!isDark)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            className="theme-toggle w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
             title="Toggle dark mode"
           >
             {isDark ? (

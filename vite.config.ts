@@ -10,10 +10,18 @@ export default defineConfig({
     // Don't pre-bundle the locally-linked workspace packages, so Vite always
     // reads their fresh dist output instead of a stale .vite/deps cache.
     exclude: ['@aoles-gl/react', '@aoles-gl/core'],
-    // But the excluded packages still import these CommonJS deps. Force Vite to
-    // pre-bundle them into ESM so the browser doesn't choke on the raw CJS
-    // (e.g. use-sync-external-store's missing `default` export).
-    include: ['zustand', 'use-sync-external-store/shim/with-selector'],
+    // The linked package still imports these runtime and peer dependencies.
+    // Pre-bundle their CommonJS modules before the browser loads the package.
+    include: [
+      'react',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+      'react-dom',
+      'react-dom/client',
+      'antd',
+      '@ant-design/icons',
+      'zustand',
+    ],
   },
   server: {
     port: 4009,
