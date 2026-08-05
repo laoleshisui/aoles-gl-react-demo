@@ -4,9 +4,12 @@ Demo application for the `@aoles-gl/react` library.
 
 ## Getting Started
 
-1. Install dependencies:
+Prerequisites: Node.js 18+, pnpm 11.18.0, and the `aoles-gl-web-package`
+repository cloned next to this repository.
+
+1. Build and install the package tarballs:
 ```bash
-pnpm install
+pnpm packages:install
 ```
 
 2. Start development server:
@@ -15,6 +18,10 @@ pnpm dev
 ```
 
 3. Open http://localhost:4009
+
+`pnpm packages:install` consumes the publishable tarballs rather than linked
+source directories. After version `0.1.0` is published, run
+`npm run registry:verify` to verify the actual registry release.
 
 ## Features
 
