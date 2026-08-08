@@ -5,6 +5,7 @@ overrides:
   '@aoles-gl/core': 'file:../aoles-gl-web-package/artifacts/release/aoles-gl-core-0.1.0.tgz'
   '@aoles-gl/theme': 'file:../aoles-gl-web-package/artifacts/release/aoles-gl-theme-0.1.0.tgz'
   '@aoles-gl/ui': 'file:../aoles-gl-web-package/artifacts/release/aoles-gl-ui-0.1.0.tgz'
+  '@aoles-gl/effects': 'file:../aoles-gl-web-package/artifacts/release/aoles-gl-effects-0.1.0.tgz'
   '@aoles-gl/react': 'file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz'
 allowBuilds:
   '@parcel/watcher': true

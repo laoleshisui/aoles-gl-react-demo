@@ -9,6 +9,7 @@ import {
   initEffects,
 } from '@aoles-gl/react';
 import '@aoles-gl/react/style.css';
+import { resolveGlslUrl } from '@aoles-gl/effects';
 
 import controllerJs from '@aoles-gl/core/wasm/GLController.mjs?url';
 import controllerWasm from '@aoles-gl/core/wasm/GLController.wasm?url';
@@ -35,28 +36,31 @@ const engine = new Engine(undefined, undefined, { width: 1920, height: 1080, fps
 engine.configure({ jsPath: controllerJs, wasmPath: controllerWasm });
 engine.configAssetPath({
   basePath: import.meta.env.VITE_ASSERT_BASEPATH || '/',
+  glslUrlResolver: resolveGlslUrl,
 });
 
-// WASM preload list (fonts and shaders needed for text rendering)
+// WASM preload list; position shaders are attached directly by the React track bridge.
 const ASSET_PRELOAD_LIST = [
-  '/fonts/NotoSansSC-Regular.ttf',
-  '/glsl/text/position_text.glsl',
-  '/glsl/video/position.glsl',
-  '/glsl/video/effect/hflip.glsl',
-];
+  { url: '/fonts/NotoSansSC-Regular.ttf', wasmPath: '/fonts/NotoSansSC-Regular.ttf' },
+  { url: resolveGlslUrl('/glsl/text/position_text.glsl'), wasmPath: '/glsl/text/position_text.glsl' },
+  { url: resolveGlslUrl('/glsl/video/position.glsl'), wasmPath: '/glsl/video/position.glsl' },
+].filter((asset): asset is { url: string; wasmPath: string } => Boolean(asset.url));
 
 engine.onWasmReady(async () => {
   const base = (import.meta.env.VITE_ASSERT_BASEPATH || '').replace(/\/$/, '');
-  for (const assetPath of ASSET_PRELOAD_LIST) {
+  for (const asset of ASSET_PRELOAD_LIST) {
     try {
-      const res = await fetch(base + assetPath);
+      const fetchPath = asset.url.startsWith('/') && !asset.url.startsWith('/assets')
+        ? base + asset.url
+        : asset.url;
+      const res = await fetch(fetchPath);
       if (!res.ok) {
-        console.warn(`[aoles-gl] Load failed: ${assetPath}`);
+        console.warn(`[aoles-gl] Load failed: ${asset.wasmPath}`);
         continue;
       }
       const buf = new Uint8Array(await res.arrayBuffer());
       const fs = (engine as any).controllerWasmLoader.module['GLController'].FS;
-      const parts = assetPath.split('/').filter(Boolean);
+      const parts = asset.wasmPath.split('/').filter(Boolean);
       parts.pop();
       let dir = '';
       for (const part of parts) {
@@ -65,9 +69,9 @@ engine.onWasmReady(async () => {
           fs.mkdir(dir);
         } catch {}
       }
-      fs.writeFile(assetPath, buf);
+      fs.writeFile(asset.wasmPath, buf);
     } catch (e) {
-      console.warn(`[aoles-gl] Preload failed: ${assetPath}`, e);
+      console.warn(`[aoles-gl] Preload failed: ${asset.wasmPath}`, e);
     }
   }
 });

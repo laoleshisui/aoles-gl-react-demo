@@ -16,6 +16,7 @@
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
     "@aoles-gl/core": "0.1.0",
+    "@aoles-gl/effects": "0.1.0",
     "@aoles-gl/react": "0.1.0",
     "@ctrl/tinycolor": "^4.2.0",
     "@floating-ui/react": "^0.26.0",
