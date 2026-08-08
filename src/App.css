@@ -213,3 +213,67 @@ html, body {
   background: #d1d5db;
   border-radius: 9999px;
 }
+
+/* ---- Export Button ---- */
+.export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.export-btn:hover { background: #2563eb; }
+.export-btn-icon { width: 14px; height: 14px; }
+
+.export-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.06);
+}
+.dark .export-progress-wrap { background: rgba(255,255,255,0.08); }
+
+.export-label {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.export-bar-track {
+  width: 120px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+.dark .export-bar-track { background: #374151; }
+
+.export-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: #3b82f6;
+  transition: width 0.3s ease;
+}
+
+.export-cancel-btn {
+  padding: 2px 6px;
+  border: 1px solid #f87171;
+  border-radius: 4px;
+  background: transparent;
+  color: #f87171;
+  font-size: 11px;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.15s;
+}
+.export-cancel-btn:hover { background: #fee2e2; }

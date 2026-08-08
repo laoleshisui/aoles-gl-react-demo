@@ -129,11 +129,11 @@ packages:
       react-dom: ^0.14.0 || ^15.0.1 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   '@aoles-gl/core@file:../aoles-gl-web-package/artifacts/release/aoles-gl-core-0.1.0.tgz':
-    resolution: {integrity: sha512-O63bxIM/OvezAwOa/mi1ljEFG4IE6Z3fy6KOC7nx68Q5uYWptrx1EWw9US47eZp1VFFq6LEODTmlJX1mzTyeSg==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-core-0.1.0.tgz}
+    resolution: {integrity: sha512-+Aou2frU3xR0BiPG5XotKu6DN5CJPBxRReb+MbXqm7xKwY003qXfT7iDtdDQzeizEQWEXtDKKdtU9g3of/0Ovg==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-core-0.1.0.tgz}
     version: 0.1.0
 
   '@aoles-gl/react@file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz':
-    resolution: {integrity: sha512-t8nEBTLtCy6PattR24O+ZfRJTFL6ANldEi45jG8Drss39lqjG4Trfob9GFdaCS+oeBpvY9xuIdmR4tP8+P3woA==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz}
+    resolution: {integrity: sha512-UT/31tN6uLYURfnJbOgCEZU9UKGfzOYTVfz9ptRQQ7Ewp+78dE+fIBIBbWy5iPKiICJzyKNqe+z4xHxRWGEHuQ==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz}
     version: 0.1.0
     peerDependencies:
       '@ant-design/icons': ^6.0.0
@@ -148,7 +148,7 @@ packages:
     version: 0.1.0
 
   '@aoles-gl/ui@file:../aoles-gl-web-package/artifacts/release/aoles-gl-ui-0.1.0.tgz':
-    resolution: {integrity: sha512-oyz8Tv8koEdK7L/Vj+X43MStUiH/qvps+f86f1QzfkPKiGmUJcjQpbeRJushp/zMh+ugWUdX4cBW2X6HBkwIFw==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-ui-0.1.0.tgz}
+    resolution: {integrity: sha512-xgIa4wLvSi0hNQWueRIOpiiB787CtU67yDQ/67lGqy7ec+JSw3MVsbGXe1k2qQ0kRSk6QreJ46q+yYDuomRj6g==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-ui-0.1.0.tgz}
     version: 0.1.0
 
   '@babel/code-frame@7.29.7':

@@ -8,6 +8,7 @@ import {
   AttributeContainer,
   ResizablePanel,
 } from '@aoles-gl/react';
+import ExportButton from './components/ExportButton';
 import './App.css';
 
 function AppContent() {
@@ -42,6 +43,8 @@ function AppContent() {
         </div>
 
         <div className="flex items-center gap-3">
+          {wasmRuntimeInited && <ExportButton />}
+
           {!wasmRuntimeInited && (
             <span className="runtime-status runtime-status-loading text-sm flex items-center gap-1">
               <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
