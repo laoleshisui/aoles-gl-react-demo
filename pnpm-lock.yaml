@@ -141,7 +141,7 @@ packages:
     version: 0.1.0
 
   '@aoles-gl/react@file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz':
-    resolution: {integrity: sha512-LRQRTkZTSiAsSqN2hrrOeTngtQkjSeoP6AmULo6ZJJl3CGO+k1ipApbHmYfKNXEISNHAkNTCxOra8VWRs4DvUA==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz}
+    resolution: {integrity: sha512-zaOTA3AONglJt15tPcO2gkUWbDYr17eeg1W74nEnm7uJ/gHBpfQM834M7m61fYPz/doLxxx3JNGUCRFkNwRXsQ==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz}
     version: 0.1.0
     peerDependencies:
       '@ant-design/icons': ^6.0.0

@@ -40,8 +40,7 @@ This demo uses:
 
 ## Assets Required
 
-Place the following assets in `public/`:
-- `/fonts/` - Font files for text rendering
-- `/glsl/` - GLSL shaders for effects and transitions
+Place font files for text rendering in `public/fonts/`.
 
-Copy from the Vue test project or provide your own.
+GLSL shaders are provided by `@aoles-gl/effects` and resolved through
+`resolveGlslUrl`; do not copy them into this demo's `public/` directory.
