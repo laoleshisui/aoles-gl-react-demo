@@ -1,46 +1,38 @@
-# Aoles GL React Demo
+<div align="center">
+  <img src="./public/logo.png" width="160" alt="Pixo" />
+  <h1>Aoles GL React Demo</h1>
+  <p><code>@aoles-gl/react</code> 的最小完整集成示例。</p>
+</div>
 
-Demo application for the `@aoles-gl/react` library.
+## 快速开始
 
-## Getting Started
+要求：Node.js 20+、pnpm 11.18.0。
 
-Prerequisites: Node.js 18+, pnpm 11.18.0, and the `aoles-gl-web-package`
-repository cloned next to this repository.
-
-1. Build and install the package tarballs:
 ```bash
-pnpm packages:install
-```
-
-2. Start development server:
-```bash
+pnpm install
 pnpm dev
 ```
 
-3. Open http://localhost:4009
+访问 <http://localhost:4009>。
 
-`pnpm packages:install` consumes the publishable tarballs rather than linked
-source directories. After version `0.1.0` is published, run
-`npm run registry:verify` to verify the actual registry release.
+## 验证 npm 发布包
 
-## Features
+项目默认从 npm registry 安装 `@aoles-gl/*`：
 
-- WebGL-based video preview
-- Drag-and-drop resource import
-- Timeline editor (in progress)
-- Real-time rendering
+```bash
+pnpm registry:verify
+```
 
-## Architecture
+`npm ls @aoles-gl/react @aoles-gl/core @aoles-gl/effects` 的结果中不应出现 `file:` 或本地 tgz 路径。
 
-This demo uses:
-- **React 18** for UI
-- **Zustand** for state management
-- **@aoles-gl/react** for video editing components
-- **WASM** for high-performance rendering
+## 项目结构
 
-## Assets Required
+```text
+src/
+├── main.tsx                 # i18n、WASM、GLSL 与 Engine 初始化
+├── App.tsx                  # 编辑器布局
+├── App.css                  # Demo 布局样式
+└── components/ExportButton.tsx
+```
 
-Place font files for text rendering in `public/fonts/`.
-
-GLSL shaders are provided by `@aoles-gl/effects` and resolved through
-`resolveGlslUrl`; do not copy them into this demo's `public/` directory.
+WASM 由 `@aoles-gl/core` 提供，GLSL 由 `@aoles-gl/effects` 提供。开发服务器已配置 COOP/COEP 响应头。

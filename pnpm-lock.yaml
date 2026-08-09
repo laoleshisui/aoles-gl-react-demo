@@ -4,13 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@aoles-gl/core': file:../aoles-gl-web-package/artifacts/release/aoles-gl-core-0.1.0.tgz
-  '@aoles-gl/theme': file:../aoles-gl-web-package/artifacts/release/aoles-gl-theme-0.1.0.tgz
-  '@aoles-gl/ui': file:../aoles-gl-web-package/artifacts/release/aoles-gl-ui-0.1.0.tgz
-  '@aoles-gl/effects': file:../aoles-gl-web-package/artifacts/release/aoles-gl-effects-0.1.0.tgz
-  '@aoles-gl/react': file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz
-
 importers:
 
   .:
@@ -19,14 +12,14 @@ importers:
         specifier: ^6.3.2
         version: 6.3.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@aoles-gl/core':
-        specifier: file:../aoles-gl-web-package/artifacts/release/aoles-gl-core-0.1.0.tgz
-        version: file:../aoles-gl-web-package/artifacts/release/aoles-gl-core-0.1.0.tgz
+        specifier: 0.1.0
+        version: 0.1.0
       '@aoles-gl/effects':
-        specifier: file:../aoles-gl-web-package/artifacts/release/aoles-gl-effects-0.1.0.tgz
-        version: file:../aoles-gl-web-package/artifacts/release/aoles-gl-effects-0.1.0.tgz
+        specifier: 0.1.0
+        version: 0.1.0
       '@aoles-gl/react':
-        specifier: file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz
-        version: file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz(@ant-design/icons@6.3.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.31)(@webav/av-cliper@0.9.0)(antd@6.5.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(i18next@23.16.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 0.1.0
+        version: 0.1.0(@ant-design/icons@6.3.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.31)(@webav/av-cliper@0.9.0)(antd@6.5.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(i18next@23.16.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@ctrl/tinycolor':
         specifier: ^4.2.0
         version: 4.2.0
@@ -132,17 +125,14 @@ packages:
       react: ^0.14.0 || ^15.0.1 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^0.14.0 || ^15.0.1 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@aoles-gl/core@file:../aoles-gl-web-package/artifacts/release/aoles-gl-core-0.1.0.tgz':
-    resolution: {integrity: sha512-TTJ4FCcQtX9SRMuEqrmOETP+880bgj8dA3xUFxmMZu3Y9zy0ywVZt74xTL79gyw9KoN4KpLiCSDbe1ZWLMDyYQ==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-core-0.1.0.tgz}
-    version: 0.1.0
+  '@aoles-gl/core@0.1.0':
+    resolution: {integrity: sha512-oCEyiUilHVJYXR1PRZLgih7zRQjaupXvPTzJCdjkXQ9vS1vatmFQ+cmzy6Wo4Cq2BqS+4JNpab181PRcHaOwfw==}
 
-  '@aoles-gl/effects@file:../aoles-gl-web-package/artifacts/release/aoles-gl-effects-0.1.0.tgz':
-    resolution: {integrity: sha512-+aobaXiPZG0H3mK5Byvt5oxV89e4SscpHwDtJsYTTDofw6QmTRVJnU3Cb5CafvZ40Om8z7ftZSLFXBorWKcPaw==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-effects-0.1.0.tgz}
-    version: 0.1.0
+  '@aoles-gl/effects@0.1.0':
+    resolution: {integrity: sha512-zCbFgxj7s6f67oN1kO1gOWu/ZYis/GDXUZnbRSYcwqQF1LXLl429e+jdPzVBY2NIug5UUj1g5/GYNSa0uO0e2w==}
 
-  '@aoles-gl/react@file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz':
-    resolution: {integrity: sha512-zaOTA3AONglJt15tPcO2gkUWbDYr17eeg1W74nEnm7uJ/gHBpfQM834M7m61fYPz/doLxxx3JNGUCRFkNwRXsQ==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz}
-    version: 0.1.0
+  '@aoles-gl/react@0.1.0':
+    resolution: {integrity: sha512-lULTnM69ZQav+sv7Ml7tD+mPVLmSHxbQARIpUZhC6F+REGLkNMNuevwbhpMjLNrVtzJxBGtDVC+9tr/2xTgmKQ==}
     peerDependencies:
       '@ant-design/icons': ^6.0.0
       '@webav/av-cliper': ^0.9.0
@@ -151,13 +141,11 @@ packages:
       react: ^18.0.0
       react-dom: ^18.0.0
 
-  '@aoles-gl/theme@file:../aoles-gl-web-package/artifacts/release/aoles-gl-theme-0.1.0.tgz':
-    resolution: {integrity: sha512-BHU92lN39oUyi6HXW8GFwuel32zkhcmWuuPRol2NE1VbX7MnyuaxGaZTZqJbt9Aivy04AvEmYbNTYqPYuFGwbw==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-theme-0.1.0.tgz}
-    version: 0.1.0
+  '@aoles-gl/theme@0.1.0':
+    resolution: {integrity: sha512-x0HW2XrrYyusP6bYOlhbp1aplg6ge1gNlGW+rQN6LZpL5lky97xb1YYQXNlOdEG5vKV7g0w3cGRqXuQrqXI73g==}
 
-  '@aoles-gl/ui@file:../aoles-gl-web-package/artifacts/release/aoles-gl-ui-0.1.0.tgz':
-    resolution: {integrity: sha512-xgIa4wLvSi0hNQWueRIOpiiB787CtU67yDQ/67lGqy7ec+JSw3MVsbGXe1k2qQ0kRSk6QreJ46q+yYDuomRj6g==, tarball: file:../aoles-gl-web-package/artifacts/release/aoles-gl-ui-0.1.0.tgz}
-    version: 0.1.0
+  '@aoles-gl/ui@0.1.0':
+    resolution: {integrity: sha512-60kfpbgDMrzNKrBRvL87L1gQjcdCp+bQPQKo64B5mMLp2yOnFpkrBWKZuLFFDuDQaohppR25LQoB3XI6M+gfqw==}
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -1539,21 +1527,21 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       throttle-debounce: 5.0.2
 
-  '@aoles-gl/core@file:../aoles-gl-web-package/artifacts/release/aoles-gl-core-0.1.0.tgz':
+  '@aoles-gl/core@0.1.0':
     dependencies:
       lodash-es: 4.18.1
       spark-md5: 3.0.2
       zod: 4.4.3
 
-  '@aoles-gl/effects@file:../aoles-gl-web-package/artifacts/release/aoles-gl-effects-0.1.0.tgz': {}
+  '@aoles-gl/effects@0.1.0': {}
 
-  '@aoles-gl/react@file:../aoles-gl-web-package/artifacts/release/aoles-gl-react-0.1.0.tgz(@ant-design/icons@6.3.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.31)(@webav/av-cliper@0.9.0)(antd@6.5.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(i18next@23.16.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@aoles-gl/react@0.1.0(@ant-design/icons@6.3.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.31)(@webav/av-cliper@0.9.0)(antd@6.5.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(i18next@23.16.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@ant-design/icons': 6.3.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@aoles-gl/core': file:../aoles-gl-web-package/artifacts/release/aoles-gl-core-0.1.0.tgz
-      '@aoles-gl/effects': file:../aoles-gl-web-package/artifacts/release/aoles-gl-effects-0.1.0.tgz
-      '@aoles-gl/theme': file:../aoles-gl-web-package/artifacts/release/aoles-gl-theme-0.1.0.tgz
-      '@aoles-gl/ui': file:../aoles-gl-web-package/artifacts/release/aoles-gl-ui-0.1.0.tgz
+      '@aoles-gl/core': 0.1.0
+      '@aoles-gl/effects': 0.1.0
+      '@aoles-gl/theme': 0.1.0
+      '@aoles-gl/ui': 0.1.0
       '@ctrl/tinycolor': 4.2.0
       '@floating-ui/react': 0.26.28(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@webav/av-cliper': 0.9.0
@@ -1575,9 +1563,9 @@ snapshots:
       - immer
       - react-native
 
-  '@aoles-gl/theme@file:../aoles-gl-web-package/artifacts/release/aoles-gl-theme-0.1.0.tgz': {}
+  '@aoles-gl/theme@0.1.0': {}
 
-  '@aoles-gl/ui@file:../aoles-gl-web-package/artifacts/release/aoles-gl-ui-0.1.0.tgz': {}
+  '@aoles-gl/ui@0.1.0': {}
 
   '@babel/code-frame@7.29.7':
     dependencies:

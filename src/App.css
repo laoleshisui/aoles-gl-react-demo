@@ -36,6 +36,19 @@ html, body {
   margin-bottom: 10px;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo {
+  display: block;
+  width: 48px;
+  height: 24px;
+  object-fit: contain;
+}
+
 .header-title {
   color: #20242b;
 }

@@ -8,10 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "packages:pack": "pnpm --dir ../aoles-gl-web-package release:pack",
-    "packages:install": "pnpm packages:pack && pnpm install --force",
-    "release:verify": "pnpm packages:install && pnpm build",
-    "registry:verify": "npm install && npm run build"
+    "registry:verify": "pnpm install --frozen-lockfile && pnpm build"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
