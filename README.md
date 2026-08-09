@@ -4,9 +4,13 @@
   <p><code>@aoles-gl/react</code> 的最小完整集成示例。</p>
 </div>
 
+## 在线体验
+
+<https://laoleshisui.github.io/aoles-gl-react-demo/>
+
 ## 快速开始
 
-要求：Node.js 20+、pnpm 11.18.0。
+要求：Node.js 22.13+、pnpm 11.18.0。
 
 ```bash
 pnpm install
@@ -35,4 +39,4 @@ src/
 └── components/ExportButton.tsx
 ```
 
-WASM 由 `@aoles-gl/core` 提供，GLSL 由 `@aoles-gl/effects` 提供。开发服务器已配置 COOP/COEP 响应头。
+WASM 由 `@aoles-gl/core` 提供，GLSL 由 `@aoles-gl/effects` 提供。开发服务器已配置 COOP/COEP 响应头；GitHub Pages 通过同源 Service Worker 启用跨源隔离，首次访问会自动刷新一次。

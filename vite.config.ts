@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/aoles-gl-react-demo/' : '/',
   plugins: [react()],
   resolve: {
     dedupe: ['react', 'react-dom', 'zustand'],
@@ -30,4 +31,4 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'require-corp',
     },
   },
-})
+}))

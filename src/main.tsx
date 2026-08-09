@@ -35,25 +35,21 @@ setupAolesI18n(i18next);
 const engine = new Engine(undefined, undefined, { width: 1920, height: 1080, fps: 30 });
 engine.configure({ jsPath: controllerJs, wasmPath: controllerWasm });
 engine.configAssetPath({
-  basePath: import.meta.env.VITE_ASSERT_BASEPATH || '/',
+  basePath: import.meta.env.BASE_URL,
   glslUrlResolver: resolveGlslUrl,
 });
 
 // WASM preload list; position shaders are attached directly by the React track bridge.
 const ASSET_PRELOAD_LIST = [
-  { url: '/fonts/NotoSansSC-Regular.ttf', wasmPath: '/fonts/NotoSansSC-Regular.ttf' },
+  { url: `${import.meta.env.BASE_URL}fonts/NotoSansSC-Regular.ttf`, wasmPath: '/fonts/NotoSansSC-Regular.ttf' },
   { url: resolveGlslUrl('/glsl/text/position_text.glsl'), wasmPath: '/glsl/text/position_text.glsl' },
   { url: resolveGlslUrl('/glsl/video/position.glsl'), wasmPath: '/glsl/video/position.glsl' },
 ].filter((asset): asset is { url: string; wasmPath: string } => Boolean(asset.url));
 
 engine.onWasmReady(async () => {
-  const base = (import.meta.env.VITE_ASSERT_BASEPATH || '').replace(/\/$/, '');
   for (const asset of ASSET_PRELOAD_LIST) {
     try {
-      const fetchPath = asset.url.startsWith('/') && !asset.url.startsWith('/assets')
-        ? base + asset.url
-        : asset.url;
-      const res = await fetch(fetchPath);
+      const res = await fetch(asset.url);
       if (!res.ok) {
         console.warn(`[aoles-gl] Load failed: ${asset.wasmPath}`);
         continue;

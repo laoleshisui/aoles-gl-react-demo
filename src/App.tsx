@@ -34,7 +34,7 @@ function AppContent() {
       {/* Header */}
       <div className="header-bar">
         <div className="brand">
-          <img className="brand-logo" src="/logo.png" alt="Pixo" />
+          <img className="brand-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="Pixo" />
           <span className="header-title font-semibold">Aoles GL React</span>
         </div>
 
