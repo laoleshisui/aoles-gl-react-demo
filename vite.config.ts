@@ -21,6 +21,7 @@ export default defineConfig(({ command }) => ({
       'react-dom/client',
       'antd',
       '@ant-design/icons',
+      'ai',
       'zustand',
     ],
   },

@@ -1,3 +1,4 @@
+import { useMemo, useRef, useState } from 'react';
 import {
   usePageState,
   usePreviewState,
@@ -7,13 +8,100 @@ import {
   ResourceContainer,
   AttributeContainer,
   ResizablePanel,
+  useResourceState,
 } from '@aoles-gl/react';
+import { AolesAiPanel, type ReactAolesAiConfig } from '@aoles-gl/react/ai';
 import ExportButton from './components/ExportButton';
+import AiApiKeyConfig from './components/AiApiKeyConfig';
 import './App.css';
+
+const AI_API_KEY_STORAGE_KEY = 'aoles-gl-react-demo:ai-api-key';
+
+function readAccessToken() {
+  const token = localStorage.getItem('access_token')?.trim();
+  return token && token !== 'your-token' ? token : undefined;
+}
+
+const agentBaseUrl = import.meta.env.VITE_API_AGENT?.trim().replace(/\/+$/, '') ?? '';
+const aiEnabled = Boolean(agentBaseUrl);
+const aiEndpoint = agentBaseUrl.endsWith('/api/chat')
+  ? agentBaseUrl
+  : `${agentBaseUrl}/api/chat`;
 
 function AppContent() {
   const pageStore = usePageState();
   const previewStore = usePreviewState();
+  const { resources } = useResourceState();
+  const resourcesRef = useRef(resources);
+  const [aiOpen, setAiOpen] = useState(true);
+  const [apiKey, setApiKey] = useState(
+    () => sessionStorage.getItem(AI_API_KEY_STORAGE_KEY)?.trim() ?? '',
+  );
+  const [apiKeyEditorOpen, setApiKeyEditorOpen] = useState(
+    () => !sessionStorage.getItem(AI_API_KEY_STORAGE_KEY)?.trim() && !readAccessToken(),
+  );
+  const [aiError, setAiError] = useState('');
+  const apiKeyRef = useRef(apiKey);
+  apiKeyRef.current = apiKey;
+  resourcesRef.current = resources;
+  const aiAuthenticated = Boolean(apiKey || readAccessToken());
+  const aiAuthLabel = apiKey ? 'API-Key（当前标签页）' : 'JWT';
+
+  const aiConfig = useMemo<ReactAolesAiConfig & { storageKey: string }>(() => ({
+    endpoint: aiEndpoint,
+    storageKey: 'aoles-gl-react-demo:ai-sessions',
+    getToken: () => apiKeyRef.current ? undefined : readAccessToken(),
+    headers: () => {
+      const headers = new Headers();
+      if (apiKeyRef.current) {
+        headers.set('Authorization', `Api-Key ${apiKeyRef.current}`);
+      }
+      return headers;
+    },
+    getAssets: () => resourcesRef.current
+      .filter(resource => (
+        resource.status === 'ready'
+        && (resource.type === 'video' || resource.type === 'audio' || resource.type === 'image')
+      ))
+      .map(resource => ({
+        id: resource.id,
+        type: resource.type,
+        prompt: resource.name,
+        urls: [{
+          id: resource.id,
+          url: resource.url,
+          origin_url: null,
+          ...resource.metadata,
+        }],
+      })),
+    authorizeToolCall: ({ name }) => {
+      if (name === 'removeClip' || name === 'removeTrack') {
+        return window.confirm('允许 AI 助手删除编辑器内容吗？');
+      }
+      return true;
+    },
+    onError: error => {
+      console.error('[aoles-gl-ai]', error);
+      const message = error instanceof Error ? error.message : String(error);
+      setAiError(/401|invalid (token|credentials|api key)/i.test(message)
+        ? 'AI 鉴权失败，请检查 API-Key 或重新登录。'
+        : message);
+    },
+  }), []);
+
+  const saveAiApiKey = (value: string) => {
+    sessionStorage.setItem(AI_API_KEY_STORAGE_KEY, value);
+    setApiKey(value);
+    setAiError('');
+    setApiKeyEditorOpen(false);
+  };
+
+  const clearAiApiKey = () => {
+    sessionStorage.removeItem(AI_API_KEY_STORAGE_KEY);
+    setApiKey('');
+    setAiError('');
+    setApiKeyEditorOpen(!readAccessToken());
+  };
 
   // Sync dark mode to <html> element
   usePageDarkMode(pageStore);
@@ -40,6 +128,15 @@ function AppContent() {
 
         <div className="flex items-center gap-3">
           {wasmRuntimeInited && <ExportButton />}
+
+          <button
+            type="button"
+            className={`ai-toggle ${aiOpen ? 'active' : ''}`.trim()}
+            aria-pressed={aiOpen}
+            onClick={() => setAiOpen(open => !open)}
+          >
+            ✦ AI 助手
+          </button>
 
           {!wasmRuntimeInited && (
             <span className="runtime-status runtime-status-loading text-sm flex items-center gap-1">
@@ -112,6 +209,42 @@ function AppContent() {
             <TrackContainer className="track-section card-style" />
           </ResizablePanel>
         </div>
+
+        {aiOpen && (
+          <aside className="ai-section">
+            {aiEnabled ? (
+              <div className="ai-panel-shell">
+                {aiAuthenticated && (
+                  <div className="ai-auth-toolbar">
+                    <span>鉴权：{aiAuthLabel}</span>
+                    <button type="button" onClick={() => setApiKeyEditorOpen(open => !open)}>
+                      {apiKeyEditorOpen ? '返回助手' : '配置 API-Key'}
+                    </button>
+                  </div>
+                )}
+                {apiKeyEditorOpen || !aiAuthenticated ? (
+                  <AiApiKeyConfig
+                    configured={Boolean(apiKey)}
+                    canCancel={aiAuthenticated}
+                    onSave={saveAiApiKey}
+                    onCancel={() => setApiKeyEditorOpen(false)}
+                    onClear={clearAiApiKey}
+                  />
+                ) : (
+                  <>
+                    {aiError && <div className="ai-auth-error">{aiError}</div>}
+                    <AolesAiPanel config={aiConfig} />
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="ai-unavailable">
+                <strong>AI 助手尚未配置</strong>
+                <span>请在 <code>.env.development.local</code> 中设置 <code>VITE_API_AGENT</code>。</span>
+              </div>
+            )}
+          </aside>
+        )}
       </div>
     </div>
   );

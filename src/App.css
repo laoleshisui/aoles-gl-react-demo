@@ -69,6 +69,22 @@ html, body {
   background: #e4e8ed;
 }
 
+.ai-toggle {
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: #4b5563;
+  background: #e5e7eb;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ai-toggle.active {
+  color: #fff;
+  background: #3b82f6;
+}
+
 .dark .header-title {
   color: #f3f4f6;
 }
@@ -87,6 +103,16 @@ html, body {
 
 .dark .theme-toggle:hover {
   background: #2d333c;
+}
+
+.dark .ai-toggle {
+  color: #d1d5db;
+  background: #2d333c;
+}
+
+.dark .ai-toggle.active {
+  color: #fff;
+  background: #3b82f6;
 }
 
 .card-style {
@@ -125,6 +151,172 @@ html, body {
   gap: 10px;
   flex-grow: 1;
   min-width: 0;
+}
+
+.ai-section {
+  width: min(380px, 30vw);
+  min-width: 320px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.ai-panel-shell {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-panel-shell > :last-child {
+  min-height: 0;
+  flex: 1;
+}
+
+.ai-auth-toolbar,
+.ai-auth-error {
+  border: 1px solid #e1e5ea;
+  border-radius: 6px;
+  color: #6b7280;
+  background: #fff;
+  font-size: 12px;
+}
+
+.ai-auth-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+}
+
+.ai-auth-toolbar button {
+  border: 0;
+  color: #2563eb;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ai-auth-error {
+  padding: 8px;
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.ai-api-key-config {
+  display: flex;
+  height: 100%;
+  min-height: 320px;
+  box-sizing: border-box;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+  color: #6b7280;
+  background: #fff;
+}
+
+.ai-api-key-config strong {
+  color: #20242b;
+  font-size: 16px;
+}
+
+.ai-api-key-config input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #20242b;
+  background: #fff;
+}
+
+.ai-api-key-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ai-api-key-actions button {
+  padding: 7px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #374151;
+  background: #fff;
+  cursor: pointer;
+}
+
+.ai-api-key-actions button.primary {
+  border-color: #2563eb;
+  color: #fff;
+  background: #2563eb;
+}
+
+.ai-api-key-actions button.danger {
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.ai-api-key-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.dark .ai-auth-toolbar,
+.dark .ai-api-key-config {
+  border-color: #2d333c;
+  color: #9ca3af;
+  background: #1b1f26;
+}
+
+.dark .ai-api-key-config strong {
+  color: #f3f4f6;
+}
+
+.dark .ai-api-key-config input,
+.dark .ai-api-key-actions button {
+  border-color: #4b5563;
+  color: #f3f4f6;
+  background: #252a33;
+}
+
+.dark .ai-auth-error {
+  border-color: #7f1d1d;
+  color: #fecaca;
+  background: #450a0a;
+}
+
+.ai-unavailable {
+  display: flex;
+  height: 100%;
+  min-height: 320px;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+  color: #6b7280;
+  background: #fff;
+  text-align: center;
+}
+
+.ai-unavailable strong {
+  color: #20242b;
+}
+
+.dark .ai-unavailable {
+  border-color: #2d333c;
+  color: #9ca3af;
+  background: #1b1f26;
+}
+
+.dark .ai-unavailable strong {
+  color: #f3f4f6;
 }
 
 .preview-attr-row {
@@ -211,6 +403,13 @@ html, body {
   .attr-resizable {
     width: 100% !important;
     height: 240px;
+    flex: none;
+  }
+
+  .ai-section {
+    width: 100%;
+    min-width: 0;
+    height: 420px;
     flex: none;
   }
 }
