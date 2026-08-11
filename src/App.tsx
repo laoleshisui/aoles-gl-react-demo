@@ -15,13 +15,6 @@ import ExportButton from './components/ExportButton';
 import AiApiKeyConfig from './components/AiApiKeyConfig';
 import './App.css';
 
-const AI_API_KEY_STORAGE_KEY = 'aoles-gl-react-demo:ai-api-key';
-
-function readAccessToken() {
-  const token = localStorage.getItem('access_token')?.trim();
-  return token && token !== 'your-token' ? token : undefined;
-}
-
 const agentBaseUrl = import.meta.env.VITE_API_AGENT?.trim().replace(/\/+$/, '') ?? '';
 const aiEnabled = Boolean(agentBaseUrl);
 const aiEndpoint = agentBaseUrl.endsWith('/api/chat')
@@ -34,23 +27,18 @@ function AppContent() {
   const { resources } = useResourceState();
   const resourcesRef = useRef(resources);
   const [aiOpen, setAiOpen] = useState(true);
-  const [apiKey, setApiKey] = useState(
-    () => sessionStorage.getItem(AI_API_KEY_STORAGE_KEY)?.trim() ?? '',
-  );
-  const [apiKeyEditorOpen, setApiKeyEditorOpen] = useState(
-    () => !sessionStorage.getItem(AI_API_KEY_STORAGE_KEY)?.trim() && !readAccessToken(),
-  );
+  const [apiKey, setApiKey] = useState('');
+  const [apiKeyEditorOpen, setApiKeyEditorOpen] = useState(true);
   const [aiError, setAiError] = useState('');
   const apiKeyRef = useRef(apiKey);
   apiKeyRef.current = apiKey;
   resourcesRef.current = resources;
-  const aiAuthenticated = Boolean(apiKey || readAccessToken());
-  const aiAuthLabel = apiKey ? 'API-Key（当前标签页）' : 'JWT';
+  const aiAuthenticated = Boolean(apiKey);
+  const aiAuthLabel = 'API-Key（当前页面）';
 
   const aiConfig = useMemo<ReactAolesAiConfig & { storageKey: string }>(() => ({
     endpoint: aiEndpoint,
     storageKey: 'aoles-gl-react-demo:ai-sessions',
-    getToken: () => apiKeyRef.current ? undefined : readAccessToken(),
     headers: () => {
       const headers = new Headers();
       if (apiKeyRef.current) {
@@ -83,24 +71,26 @@ function AppContent() {
     onError: error => {
       console.error('[aoles-gl-ai]', error);
       const message = error instanceof Error ? error.message : String(error);
-      setAiError(/401|invalid (token|credentials|api key)/i.test(message)
-        ? 'AI 鉴权失败，请检查 API-Key 或重新登录。'
-        : message);
+      if (/401|invalid (token|credentials|api key)/i.test(message)) {
+        setAiError('AI 鉴权失败，请检查 PixoClip API-Key。');
+      } else if (/tool round limit/i.test(message)) {
+        setAiError('AI 操作步骤过多，已自动停止。请缩小任务范围后重试。');
+      } else {
+        setAiError(`AI 请求失败：${message}`);
+      }
     },
   }), []);
 
   const saveAiApiKey = (value: string) => {
-    sessionStorage.setItem(AI_API_KEY_STORAGE_KEY, value);
     setApiKey(value);
     setAiError('');
     setApiKeyEditorOpen(false);
   };
 
   const clearAiApiKey = () => {
-    sessionStorage.removeItem(AI_API_KEY_STORAGE_KEY);
     setApiKey('');
     setAiError('');
-    setApiKeyEditorOpen(!readAccessToken());
+    setApiKeyEditorOpen(true);
   };
 
   // Sync dark mode to <html> element
@@ -214,23 +204,17 @@ function AppContent() {
           <aside className="ai-section">
             {aiEnabled ? (
               <div className="ai-panel-shell">
+                <AiApiKeyConfig
+                  configured={Boolean(apiKey)}
+                  authenticated={aiAuthenticated}
+                  expanded={apiKeyEditorOpen || !aiAuthenticated}
+                  authLabel={aiAuthLabel}
+                  onSave={saveAiApiKey}
+                  onEdit={() => setApiKeyEditorOpen(true)}
+                  onCancel={() => setApiKeyEditorOpen(false)}
+                  onClear={clearAiApiKey}
+                />
                 {aiAuthenticated && (
-                  <div className="ai-auth-toolbar">
-                    <span>鉴权：{aiAuthLabel}</span>
-                    <button type="button" onClick={() => setApiKeyEditorOpen(open => !open)}>
-                      {apiKeyEditorOpen ? '返回助手' : '配置 API-Key'}
-                    </button>
-                  </div>
-                )}
-                {apiKeyEditorOpen || !aiAuthenticated ? (
-                  <AiApiKeyConfig
-                    configured={Boolean(apiKey)}
-                    canCancel={aiAuthenticated}
-                    onSave={saveAiApiKey}
-                    onCancel={() => setApiKeyEditorOpen(false)}
-                    onClear={clearAiApiKey}
-                  />
-                ) : (
                   <>
                     {aiError && <div className="ai-auth-error">{aiError}</div>}
                     <AolesAiPanel config={aiConfig} />

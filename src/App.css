@@ -168,32 +168,17 @@ html, body {
   gap: 8px;
 }
 
-.ai-panel-shell > :last-child {
+.ai-panel-shell > .aoles-ai-panel {
   min-height: 0;
   flex: 1;
 }
 
-.ai-auth-toolbar,
 .ai-auth-error {
   border: 1px solid #e1e5ea;
   border-radius: 6px;
   color: #6b7280;
   background: #fff;
   font-size: 12px;
-}
-
-.ai-auth-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 8px;
-}
-
-.ai-auth-toolbar button {
-  border: 0;
-  color: #2563eb;
-  background: transparent;
-  cursor: pointer;
 }
 
 .ai-auth-error {
@@ -204,26 +189,79 @@ html, body {
 }
 
 .ai-api-key-config {
-  display: flex;
-  height: 100%;
-  min-height: 320px;
   box-sizing: border-box;
-  flex-direction: column;
-  justify-content: center;
-  gap: 12px;
-  padding: 24px;
+  padding: 10px 12px;
   border: 1px solid #e1e5ea;
   border-radius: 8px;
   color: #6b7280;
   background: #fff;
 }
 
-.ai-api-key-config strong {
-  color: #20242b;
-  font-size: 16px;
+.ai-api-key-config.expanded {
+  padding: 14px;
 }
 
-.ai-api-key-config input {
+.ai-api-key-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-api-key-status {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 0 4px #eff6ff;
+}
+
+.ai-api-key-status.connected {
+  background: #22c55e;
+  box-shadow: 0 0 0 4px #f0fdf4;
+}
+
+.ai-api-key-summary {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ai-api-key-summary strong {
+  color: #20242b;
+  font-size: 13px;
+}
+
+.ai-api-key-summary small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-api-key-edit {
+  padding: 4px 6px;
+  border: 0;
+  color: #2563eb;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ai-api-key-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.ai-api-key-form p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ai-api-key-form input {
   box-sizing: border-box;
   width: 100%;
   padding: 9px 10px;
@@ -236,7 +274,8 @@ html, body {
 .ai-api-key-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
 }
 
 .ai-api-key-actions button {
@@ -255,8 +294,14 @@ html, body {
 }
 
 .ai-api-key-actions button.danger {
-  border-color: #ef4444;
+  border-color: transparent;
   color: #dc2626;
+  background: transparent;
+}
+
+.ai-api-key-actions button.quiet {
+  border-color: transparent;
+  background: transparent;
 }
 
 .ai-api-key-actions button:disabled {
@@ -264,22 +309,34 @@ html, body {
   opacity: 0.5;
 }
 
-.dark .ai-auth-toolbar,
 .dark .ai-api-key-config {
   border-color: #2d333c;
   color: #9ca3af;
   background: #1b1f26;
 }
 
-.dark .ai-api-key-config strong {
+.dark .ai-api-key-summary strong {
   color: #f3f4f6;
 }
 
-.dark .ai-api-key-config input,
+.dark .ai-api-key-form input,
 .dark .ai-api-key-actions button {
   border-color: #4b5563;
   color: #f3f4f6;
   background: #252a33;
+}
+
+.dark .ai-api-key-actions button.quiet,
+.dark .ai-api-key-actions button.danger {
+  background: transparent;
+}
+
+.dark .ai-api-key-status {
+  box-shadow: 0 0 0 4px #172554;
+}
+
+.dark .ai-api-key-status.connected {
+  box-shadow: 0 0 0 4px #052e16;
 }
 
 .dark .ai-auth-error {

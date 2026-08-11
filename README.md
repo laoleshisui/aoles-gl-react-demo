@@ -29,12 +29,11 @@ VITE_API_AGENT=http://localhost:3000
 ```
 
 AI 请求会发送到 `${VITE_API_AGENT}/api/chat`。独立 Demo 没有登录页，首次
-打开 AI 助手时可手动粘贴 dataserver 签发的 API-Key；请求头格式为
-`Authorization: Api-Key <key>`。API-Key 只保存在当前标签页的
-`sessionStorage`，关闭标签页后自动清除，也不会写入 Vite 环境变量。
+打开 AI 助手时可手动粘贴由 PixoClip 签发的 API-Key；请求头格式为
+`Authorization: Api-Key <key>`。API-Key 只保存在当前页面内存中，刷新或
+关闭页面后自动清除，也不会写入 Web Storage 或 Vite 环境变量。
 
-如果宿主应用已经登录并在 `localStorage.access_token` 中保存了有效 JWT，
-Demo 会自动使用 `Authorization: Bearer <token>`；手动配置的 API-Key 优先。
+独立 Demo 仅支持 API-Key，不读取宿主页面的 JWT 登录状态。
 
 本地导入的视频、音频和图片会作为受限资产列表提供给助手；删除轨道或
 片段前会再次请求用户确认。AI 会话按当前 Engine 隔离并保存在
