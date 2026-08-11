@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTrackStore } from '@aoles-gl/react';
 
 /**

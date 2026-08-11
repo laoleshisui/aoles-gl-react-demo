@@ -1,51 +1,192 @@
-import { useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  App as AntdApp,
+  Button,
+  Dropdown,
+  Tooltip,
+  type MenuProps,
+} from 'antd';
+import {
+  CheckOutlined,
+  DownOutlined,
+  LoadingOutlined,
+  LockOutlined,
+  MoonOutlined,
+  RobotOutlined,
+  SunOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons';
 import {
   usePageState,
   usePreviewState,
   usePageDarkMode,
+  useResourceState,
   PreviewContainer,
   TrackContainer,
   ResourceContainer,
   AttributeContainer,
   ResizablePanel,
-  useResourceState,
 } from '@aoles-gl/react';
-import { AolesAiPanel, type ReactAolesAiConfig } from '@aoles-gl/react/ai';
+import {
+  AolesAiPanel,
+  type AolesAiModelProfile,
+  type AolesAiProfileInfo,
+  type AolesAiProfilesResponse,
+  type ReactAolesAiConfig,
+} from '@aoles-gl/react/ai';
 import ExportButton from './components/ExportButton';
 import AiApiKeyConfig from './components/AiApiKeyConfig';
 import './App.css';
 
-const agentBaseUrl = import.meta.env.VITE_API_AGENT?.trim().replace(/\/+$/, '') ?? '';
-const aiEnabled = Boolean(agentBaseUrl);
-const aiEndpoint = agentBaseUrl.endsWith('/api/chat')
-  ? agentBaseUrl
-  : `${agentBaseUrl}/api/chat`;
+const AI_PROFILE_LABELS = {
+  fast: '快速',
+  balanced: '均衡',
+  reasoning: '深度',
+  media: '多媒体',
+} satisfies Record<AolesAiModelProfile, string>;
+
+const AI_PROFILE_DESCRIPTIONS = {
+  fast: '低延迟，适合简单操作',
+  balanced: '速度与质量均衡',
+  reasoning: '适合复杂编辑任务',
+  media: '侧重图片与视频理解',
+} satisfies Record<AolesAiModelProfile, string>;
+
+function isAiModelProfile(value: unknown): value is AolesAiModelProfile {
+  return typeof value === 'string'
+    && Object.prototype.hasOwnProperty.call(AI_PROFILE_LABELS, value);
+}
 
 function AppContent() {
+  const { message } = AntdApp.useApp();
   const pageStore = usePageState();
   const previewStore = usePreviewState();
   const { resources } = useResourceState();
-  const resourcesRef = useRef(resources);
   const [aiOpen, setAiOpen] = useState(true);
   const [apiKey, setApiKey] = useState('');
   const [apiKeyEditorOpen, setApiKeyEditorOpen] = useState(true);
-  const [aiError, setAiError] = useState('');
+  const [aiProfile, setAiProfile] = useState<AolesAiModelProfile>('balanced');
+  const [aiProfiles, setAiProfiles] = useState<AolesAiProfileInfo[]>([]);
+  const [aiProfilesLoading, setAiProfilesLoading] = useState(false);
+  const [aiProfilesError, setAiProfilesError] = useState('');
+  const [aiClientSelectable, setAiClientSelectable] = useState(false);
+  const [profilesReloadVersion, setProfilesReloadVersion] = useState(0);
   const apiKeyRef = useRef(apiKey);
+  const aiProfileRef = useRef(aiProfile);
+  const resourcesRef = useRef(resources);
+
   apiKeyRef.current = apiKey;
+  aiProfileRef.current = aiProfile;
   resourcesRef.current = resources;
+
+  const agentBaseUrl = import.meta.env.VITE_API_AGENT?.trim().replace(/\/+$/, '') ?? '';
+  const aiEnabled = Boolean(agentBaseUrl);
   const aiAuthenticated = Boolean(apiKey);
-  const aiAuthLabel = 'API-Key（当前页面）';
+  const aiEndpoint = agentBaseUrl.endsWith('/api/chat')
+    ? agentBaseUrl
+    : `${agentBaseUrl}/api/chat`;
+  const aiProfilesEndpoint = `${aiEndpoint.slice(0, -'/api/chat'.length)}/api/ai/profiles`;
+
+  // Sync dark mode to <html> element
+  usePageDarkMode(pageStore);
+
+  const isDark = pageStore((state: any) => state.isDark as boolean);
+  const attrWidth = pageStore((state: any) => state.attrWidth as number);
+  const trackHeight = pageStore((state: any) => state.trackHeight as number);
+  const setIsDark = pageStore.getState().setIsDark;
+  const setAttrWidth = pageStore.getState().setAttrWidth;
+  const setTrackHeight = pageStore.getState().setTrackHeight;
+
+  const wasmRuntimeInited = previewStore(
+    (state: any) => state.wasmRuntimeInited as boolean
+  );
+
+  const aiProfileMenuEnabled = (
+    aiClientSelectable
+    && !aiProfilesLoading
+    && !aiProfilesError
+    && aiProfiles.length > 0
+  );
+  const aiProfileButtonLabel = aiProfilesLoading
+    ? '读取档位'
+    : aiProfilesError
+      ? '档位不可用'
+      : aiProfiles.length
+        ? AI_PROFILE_LABELS[aiProfile]
+        : '暂无档位';
+  const aiProfileTooltip = aiProfilesLoading
+    ? '正在读取服务端档位配置'
+    : aiProfilesError
+      ? '档位加载失败，请更换 API-Key 后重试'
+      : !aiProfiles.length
+        ? '服务端未提供可用档位'
+        : !aiClientSelectable
+          ? `服务端已锁定为${AI_PROFILE_LABELS[aiProfile]}档`
+          : '选择 AI 模型档位';
+
+  useEffect(() => {
+    if (!apiKey) {
+      setAiProfile('balanced');
+      setAiProfiles([]);
+      setAiProfilesLoading(false);
+      setAiProfilesError('');
+      setAiClientSelectable(false);
+      return;
+    }
+
+    const abortController = new AbortController();
+    setAiProfilesLoading(true);
+    setAiProfilesError('');
+
+    void fetch(aiProfilesEndpoint, {
+      headers: { Authorization: `Api-Key ${apiKey}` },
+      signal: abortController.signal,
+    }).then(async (response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const payload = await response.json() as Partial<AolesAiProfilesResponse>;
+      const profiles = Array.isArray(payload.profiles)
+        ? payload.profiles.filter(profile => isAiModelProfile(profile?.id))
+        : [];
+      if (!profiles.length) throw new Error('服务端没有返回可用的 AI 模型档位');
+
+      const defaultProfile = isAiModelProfile(payload.defaultProfile)
+        && profiles.some(profile => profile.id === payload.defaultProfile)
+        ? payload.defaultProfile
+        : profiles[0].id;
+      const clientSelectable = payload.clientSelectable === true;
+
+      setAiProfiles(profiles);
+      setAiClientSelectable(clientSelectable);
+      setAiProfile(current => (
+        clientSelectable && profiles.some(profile => profile.id === current)
+          ? current
+          : defaultProfile
+      ));
+    }).catch((error: unknown) => {
+      if (abortController.signal.aborted) return;
+      setAiProfiles([]);
+      setAiClientSelectable(false);
+      setAiProfilesError(error instanceof Error ? error.message : String(error));
+      void message.warning('AI 模型档位加载失败，请检查服务地址和 API-Key。');
+    }).finally(() => {
+      if (!abortController.signal.aborted) setAiProfilesLoading(false);
+    });
+
+    return () => abortController.abort();
+  }, [apiKey, aiProfilesEndpoint, message, profilesReloadVersion]);
 
   const aiConfig = useMemo<ReactAolesAiConfig & { storageKey: string }>(() => ({
     endpoint: aiEndpoint,
     storageKey: 'aoles-gl-react-demo:ai-sessions',
-    headers: () => {
-      const headers = new Headers();
-      if (apiKeyRef.current) {
-        headers.set('Authorization', `Api-Key ${apiKeyRef.current}`);
-      }
-      return headers;
-    },
+    getModelProfile: () => aiProfileRef.current,
+    headers: (): HeadersInit => apiKeyRef.current
+      ? { Authorization: `Api-Key ${apiKeyRef.current}` }
+      : {},
     getAssets: () => resourcesRef.current
       .filter(resource => (
         resource.status === 'ready'
@@ -68,43 +209,72 @@ function AppContent() {
       }
       return true;
     },
-    onError: error => {
+    onError: (error) => {
       console.error('[aoles-gl-ai]', error);
-      const message = error instanceof Error ? error.message : String(error);
-      if (/401|invalid (token|credentials|api key)/i.test(message)) {
-        setAiError('AI 鉴权失败，请检查 PixoClip API-Key。');
-      } else if (/tool round limit/i.test(message)) {
-        setAiError('AI 操作步骤过多，已自动停止。请缩小任务范围后重试。');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (/401|invalid (token|credentials|api key)/i.test(errorMessage)) {
+        void message.error('AI 鉴权失败，请检查 PixoClip API-Key。');
+      } else if (/tool round limit/i.test(errorMessage)) {
+        void message.warning('AI 操作步骤过多，已自动停止。请缩小任务范围后重试。');
       } else {
-        setAiError(`AI 请求失败：${message}`);
+        void message.error(`AI 请求失败：${errorMessage}`);
       }
     },
-  }), []);
+  }), [aiEndpoint, message]);
 
-  const saveAiApiKey = (value: string) => {
-    setApiKey(value);
-    setAiError('');
-    setApiKeyEditorOpen(false);
-  };
+  const profileMenuItems = useMemo<MenuProps['items']>(() => aiProfiles.map(profile => ({
+    key: profile.id,
+    label: (
+      <div className={`ai-profile-option ${profile.id === aiProfile ? 'active' : ''}`.trim()}>
+        <span className="ai-profile-check">
+          {profile.id === aiProfile && <CheckOutlined />}
+        </span>
+        <span className="ai-profile-option-copy">
+          <strong>{AI_PROFILE_LABELS[profile.id]}</strong>
+          <small>{AI_PROFILE_DESCRIPTIONS[profile.id]}</small>
+        </span>
+      </div>
+    ),
+  })), [aiProfile, aiProfiles]);
 
-  const clearAiApiKey = () => {
-    setApiKey('');
-    setAiError('');
-    setApiKeyEditorOpen(true);
-  };
+  const profileTrigger = (
+    <button
+      type="button"
+      className={`ai-profile-trigger ${aiProfileMenuEnabled ? '' : 'disabled'}`.trim()}
+      aria-label={aiProfileTooltip}
+      aria-disabled={!aiProfileMenuEnabled}
+    >
+      {aiProfilesLoading ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
+      <span className="ai-profile-trigger-label">{aiProfileButtonLabel}</span>
+      {aiProfileMenuEnabled ? <DownOutlined className="ai-profile-chevron" /> : (
+        aiProfiles.length > 0 && !aiProfilesError ? <LockOutlined /> : null
+      )}
+    </button>
+  );
 
-  // Sync dark mode to <html> element
-  usePageDarkMode(pageStore);
-
-  const isDark = pageStore((state: any) => state.isDark as boolean);
-  const attrWidth = pageStore((state: any) => state.attrWidth as number);
-  const trackHeight = pageStore((state: any) => state.trackHeight as number);
-  const setIsDark = pageStore.getState().setIsDark;
-  const setAttrWidth = pageStore.getState().setAttrWidth;
-  const setTrackHeight = pageStore.getState().setTrackHeight;
-
-  const wasmRuntimeInited = previewStore(
-    (state: any) => state.wasmRuntimeInited as boolean
+  const profileSelector = aiProfileMenuEnabled ? (
+    <Dropdown
+      trigger={['click']}
+      placement="topLeft"
+      classNames={{ root: 'ai-profile-dropdown' }}
+      getPopupContainer={trigger => trigger.closest('.aoles-ai-composer-box') ?? document.body}
+      menu={{
+        items: profileMenuItems,
+        selectable: true,
+        selectedKeys: [aiProfile],
+        onClick: ({ key }) => {
+          if (isAiModelProfile(key) && aiProfiles.some(profile => profile.id === key)) {
+            setAiProfile(key);
+          }
+        },
+      }}
+    >
+      {profileTrigger}
+    </Dropdown>
+  ) : (
+    <Tooltip title={aiProfileTooltip} placement="top">
+      {profileTrigger}
+    </Tooltip>
   );
 
   return (
@@ -116,17 +286,8 @@ function AppContent() {
           <span className="header-title font-semibold">Aoles GL React</span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="header-actions">
           {wasmRuntimeInited && <ExportButton />}
-
-          <button
-            type="button"
-            className={`ai-toggle ${aiOpen ? 'active' : ''}`.trim()}
-            aria-pressed={aiOpen}
-            onClick={() => setAiOpen(open => !open)}
-          >
-            ✦ AI 助手
-          </button>
 
           {!wasmRuntimeInited && (
             <span className="runtime-status runtime-status-loading text-sm flex items-center gap-1">
@@ -145,20 +306,22 @@ function AppContent() {
             </span>
           )}
 
+          <Button
+            size="small"
+            type={aiOpen ? 'primary' : 'default'}
+            icon={<RobotOutlined />}
+            aria-pressed={aiOpen}
+            onClick={() => setAiOpen(value => !value)}
+          >
+            AI 助手
+          </Button>
+
           <button
             onClick={() => setIsDark(!isDark)}
             className="theme-toggle w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
             title="Toggle dark mode"
           >
-            {isDark ? (
-              <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-              </svg>
-            )}
+            {isDark ? <SunOutlined /> : <MoonOutlined />}
           </button>
         </div>
       </div>
@@ -208,17 +371,21 @@ function AppContent() {
                   configured={Boolean(apiKey)}
                   authenticated={aiAuthenticated}
                   expanded={apiKeyEditorOpen || !aiAuthenticated}
-                  authLabel={aiAuthLabel}
-                  onSave={saveAiApiKey}
+                  authLabel="API-Key（当前标签页）"
+                  onSave={(value) => {
+                    setApiKey(value);
+                    setApiKeyEditorOpen(false);
+                    setProfilesReloadVersion(version => version + 1);
+                  }}
                   onEdit={() => setApiKeyEditorOpen(true)}
                   onCancel={() => setApiKeyEditorOpen(false)}
-                  onClear={clearAiApiKey}
+                  onClear={() => {
+                    setApiKey('');
+                    setApiKeyEditorOpen(true);
+                  }}
                 />
                 {aiAuthenticated && (
-                  <>
-                    {aiError && <div className="ai-auth-error">{aiError}</div>}
-                    <AolesAiPanel config={aiConfig} />
-                  </>
+                  <AolesAiPanel config={aiConfig} composerTools={profileSelector} />
                 )}
               </div>
             ) : (
@@ -235,7 +402,11 @@ function AppContent() {
 }
 
 function App() {
-  return <AppContent />;
+  return (
+    <AntdApp>
+      <AppContent />
+    </AntdApp>
+  );
 }
 
 export default App;
