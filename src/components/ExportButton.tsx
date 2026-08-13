@@ -18,11 +18,11 @@ export default function ExportButton() {
   function handleExport() {
     // 使用 ConfigController 已配置的分辨率/fps 作为默认值。
     // 如需自定义可传参：
-    // startExport('/tmp/export_out.webm',
+    // startExport('/opfs/export_out.webm',
     //   { width: 1920, height: 1080, fps: 30, bps: 8_000_000, codec_name: 'libx264' },
     //   { sample_rate: 48000, codec_name: 'aac', bps: 192000 }
     // )
-    startExport('/tmp/export_out.webm');
+    startExport('/opfs/export_out.webm');
   }
 
   if (isExporting) {
