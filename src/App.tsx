@@ -25,6 +25,7 @@ import {
   usePageState,
   usePreviewState,
   usePageDarkMode,
+  useDraftRecovery,
   useResourceState,
   PreviewContainer,
   TrackContainer,
@@ -41,6 +42,7 @@ import {
 } from '@aoles-gl/react/ai';
 import ExportButton from './components/ExportButton';
 import AiApiKeyConfig from './components/AiApiKeyConfig';
+import DraftManagerDialog from './components/DraftManagerDialog';
 import './App.css';
 
 const AI_PROFILE_LABELS = {
@@ -67,6 +69,7 @@ function AppContent() {
   const pageStore = usePageState();
   const previewStore = usePreviewState();
   const { resources } = useResourceState();
+  const draftRecovery = useDraftRecovery();
   const [aiOpen, setAiOpen] = useState(true);
   const [apiKey, setApiKey] = useState('');
   const [apiKeyEditorOpen, setApiKeyEditorOpen] = useState(true);
@@ -94,6 +97,14 @@ function AppContent() {
 
   // Sync dark mode to <html> element
   usePageDarkMode(pageStore);
+
+  useEffect(() => {
+    if (!draftRecovery.report || draftRecovery.report.restored) return;
+    const missing = draftRecovery.report.missingAssets.length
+      ? ` 缺失资源：${draftRecovery.report.missingAssets.join('、')}`
+      : '';
+    void message.warning(`草稿恢复失败。${draftRecovery.report.error ?? ''}${missing}`.trim());
+  }, [draftRecovery.report, message]);
 
   const isDark = pageStore((state: any) => state.isDark as boolean);
   const attrWidth = pageStore((state: any) => state.attrWidth as number);
@@ -287,6 +298,7 @@ function AppContent() {
         </div>
 
         <div className="header-actions">
+          <DraftManagerDialog recovery={draftRecovery} />
           {wasmRuntimeInited && <ExportButton />}
 
           {!wasmRuntimeInited && (
