@@ -33,6 +33,7 @@ setupAolesI18n(i18next);
 
 // Create Engine instance and configure WASM paths
 const engine = new Engine(undefined, undefined, { width: 1920, height: 1080, fps: 30 });
+engine.configureResourceNamespace('aoles-gl-react-demo');
 engine.configure({ jsPath: controllerJs, wasmPath: controllerWasm });
 engine.configAssetPath({
   basePath: import.meta.env.BASE_URL,

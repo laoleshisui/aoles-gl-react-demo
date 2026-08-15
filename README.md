@@ -39,6 +39,14 @@ AI 请求会发送到 `${VITE_API_AGENT}/api/chat`。独立 Demo 没有登录页
 片段前会再次请求用户确认。AI 会话按当前 Engine 隔离并保存在
 `localStorage`。
 
+## 本地资源
+
+Demo 为当前 Engine 使用 `aoles-gl-react-demo` 独立资源命名空间。导入的媒体
+二进制写入 OPFS，资源索引保存在 IndexedDB；刷新页面后资源库会自动恢复。
+草稿中的 `assetId` 会在导入草稿时优先恢复对应媒体，旧草稿仍可通过原有资源
+加载器恢复。需要清理已删除资源时，调用资源管理器的 `collectGarbage()` 并传入
+当前草稿的 `collectReferencedAssetIds()` 结果。
+
 ## 验证 npm 发布包
 
 项目默认从 npm registry 安装 `@aoles-gl/*`：
