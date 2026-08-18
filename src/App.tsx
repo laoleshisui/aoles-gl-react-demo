@@ -8,6 +8,7 @@ import {
   App as AntdApp,
   Button,
   Dropdown,
+  Modal,
   Tooltip,
   type MenuProps,
 } from 'antd';
@@ -18,6 +19,7 @@ import {
   LockOutlined,
   MoonOutlined,
   RobotOutlined,
+  SafetyCertificateOutlined,
   SunOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
@@ -32,6 +34,7 @@ import {
   ResourceContainer,
   AttributeContainer,
   ResizablePanel,
+  HealthCheckPanel,
 } from '@aoles-gl/react';
 import {
   AolesAiPanel,
@@ -71,6 +74,7 @@ function AppContent() {
   const { resources } = useResourceState();
   const draftRecovery = useDraftRecovery();
   const [aiOpen, setAiOpen] = useState(true);
+  const [healthCheckOpen, setHealthCheckOpen] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [apiKeyEditorOpen, setApiKeyEditorOpen] = useState(true);
   const [aiProfile, setAiProfile] = useState<AolesAiModelProfile>('balanced');
@@ -301,6 +305,14 @@ function AppContent() {
           <DraftManagerDialog recovery={draftRecovery} />
           {wasmRuntimeInited && <ExportButton />}
 
+          <Button
+            size="small"
+            icon={<SafetyCertificateOutlined />}
+            onClick={() => setHealthCheckOpen(true)}
+          >
+            资源健康
+          </Button>
+
           {!wasmRuntimeInited && (
             <span className="runtime-status runtime-status-loading text-sm flex items-center gap-1">
               <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -337,6 +349,17 @@ function AppContent() {
           </button>
         </div>
       </div>
+
+      <Modal
+        title="资源健康检查"
+        open={healthCheckOpen}
+        footer={null}
+        width={980}
+        destroyOnClose
+        onCancel={() => setHealthCheckOpen(false)}
+      >
+        <HealthCheckPanel />
+      </Modal>
 
       {/* Main layout */}
       <div className="main-content">
