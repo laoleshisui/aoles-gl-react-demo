@@ -355,7 +355,7 @@ function AppContent() {
         open={healthCheckOpen}
         footer={null}
         width={980}
-        destroyOnClose
+        destroyOnHidden
         onCancel={() => setHealthCheckOpen(false)}
       >
         <HealthCheckPanel />
