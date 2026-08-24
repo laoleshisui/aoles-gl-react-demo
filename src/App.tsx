@@ -8,7 +8,9 @@ import {
   App as AntdApp,
   Button,
   Dropdown,
+  Input,
   Modal,
+  Select,
   Tooltip,
   type MenuProps,
 } from 'antd';
@@ -45,10 +47,13 @@ import {
 } from '@aoles-gl/react/ai';
 import {
   createArtifactHttpRepository,
+  createDraftHttpAdapter,
+  createProjectRepository,
   createShaderLibraryRepository,
   createWorkspaceRepository,
   type ArtifactRepository,
   type ShaderLibraryRepository,
+  type WorkspaceProject,
 } from '@aoles-gl/core';
 import ExportButton from './components/ExportButton';
 import AiApiKeyConfig from './components/AiApiKeyConfig';
@@ -79,11 +84,19 @@ function AppContent() {
   const pageStore = usePageState();
   const previewStore = usePreviewState();
   const { resources } = useResourceState();
-  const draftRecovery = useDraftRecovery();
   const [aiOpen, setAiOpen] = useState(true);
   const [healthCheckOpen, setHealthCheckOpen] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [workspaceId, setWorkspaceId] = useState('');
+  const legacyProjectId = 'aoles-gl-react-demo:project:default';
+  const legacyAutosaveId = 'aoles-gl-react-demo:autosave';
+  const [projectId, setProjectId] = useState(legacyProjectId);
+  const [currentProject, setCurrentProject] = useState<WorkspaceProject>();
+  const [projects, setProjects] = useState<WorkspaceProject[]>([]);
+  const projectRepositoryRef = useRef<ReturnType<typeof createProjectRepository>>();
+  const [projectDialog, setProjectDialog] = useState<'create' | 'rename' | null>(null);
+  const [projectName, setProjectName] = useState('');
+  const [projectsLoading, setProjectsLoading] = useState(false);
   const [artifactRepository, setArtifactRepository] = useState<ArtifactRepository>();
   const [shaderLibraryRepository, setShaderLibraryRepository] = useState<ShaderLibraryRepository>();
   const [apiKeyEditorOpen, setApiKeyEditorOpen] = useState(true);
@@ -109,6 +122,26 @@ function AppContent() {
     ? agentBaseUrl
     : `${agentBaseUrl}/api/chat`;
   const aiProfilesEndpoint = `${aiEndpoint.slice(0, -'/api/chat'.length)}/api/ai/profiles`;
+  const draftSync = useMemo(() => {
+    if (!workspaceId || !dataServerBaseUrl) return undefined;
+    const options = {
+      baseUrl: dataServerBaseUrl,
+      getAccessToken: () => apiKeyRef.current,
+      authorizationScheme: 'Api-Key' as const,
+    };
+    return {
+      remote: createDraftHttpAdapter(options),
+      context: {
+        scopeKey: workspaceId,
+        projectId,
+      },
+    };
+  }, [dataServerBaseUrl, projectId, workspaceId]);
+  const draftRecovery = useDraftRecovery({
+    draftSync,
+    projectId,
+  });
+  const { migrateProject } = draftRecovery;
 
   // Sync dark mode to <html> element
   usePageDarkMode(pageStore);
@@ -209,6 +242,10 @@ function AppContent() {
   useEffect(() => {
     let cancelled = false;
     setWorkspaceId('');
+    setCurrentProject(undefined);
+    setProjects([]);
+    projectRepositoryRef.current = undefined;
+    setProjectId(legacyProjectId);
     setArtifactRepository(undefined);
     setShaderLibraryRepository(undefined);
     if (!apiKey || !dataServerBaseUrl) return () => { cancelled = true; };
@@ -217,16 +254,94 @@ function AppContent() {
       getAccessToken: () => apiKeyRef.current,
       authorizationScheme: 'Api-Key' as const,
     };
-    void createWorkspaceRepository(options).ensurePersonal().then(workspace => {
+    void createWorkspaceRepository(options).ensurePersonal().then(async workspace => {
       if (cancelled) return;
+      const projectRepository = createProjectRepository(options);
+      const defaultProject = await projectRepository.ensureDefault(workspace.id);
+      const projectList = await projectRepository.list(workspace.id);
+      const autosaveIdMap = {
+        [legacyAutosaveId]: `aoles-gl-react-demo:autosave:${encodeURIComponent(defaultProject.id)}`,
+      };
+      const migratedCount = (
+        await migrateProject('aoles-gl-react-demo', defaultProject.id, { draftIdMap: autosaveIdMap })
+      ) + (
+        await migrateProject(legacyProjectId, defaultProject.id, { draftIdMap: autosaveIdMap })
+      );
+      if (cancelled) return;
+      setCurrentProject(defaultProject);
+      setProjects(projectList);
+      projectRepositoryRef.current = projectRepository;
+      setProjectId(defaultProject.id);
       setWorkspaceId(workspace.id);
       setArtifactRepository(createArtifactHttpRepository(options));
       setShaderLibraryRepository(createShaderLibraryRepository(options));
+      if (migratedCount > 0) void message.info(`已将 ${migratedCount} 个本地草稿迁移到默认项目`);
     }).catch(error => {
       if (!cancelled) void message.warning(`数据服务连接失败：${error instanceof Error ? error.message : String(error)}`);
     });
     return () => { cancelled = true; };
-  }, [apiKey, dataServerBaseUrl, message]);
+  }, [apiKey, dataServerBaseUrl, legacyProjectId, message, migrateProject]);
+
+  const switchProject = async (nextProjectId: string) => {
+    const next = projects.find(project => project.id === nextProjectId);
+    if (!next || next.id === currentProject?.id || !workspaceId) return;
+    const previous = currentProject;
+    setProjectsLoading(true);
+    try {
+      await draftRecovery.saveNow();
+      setCurrentProject(next);
+      setProjectId(next.id);
+    } catch (error) {
+      setCurrentProject(previous);
+      setProjectId(previous?.id ?? legacyProjectId);
+      void message.error(`切换项目失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
+  const submitProject = async () => {
+    const name = projectName.trim();
+    const repository = projectRepositoryRef.current;
+    if (!name || !repository || !workspaceId) return;
+    setProjectsLoading(true);
+    try {
+      const next = projectDialog === 'create'
+        ? await repository.create(workspaceId, { name })
+        : await repository.update(workspaceId, currentProject!.id, { name });
+      setProjects(items => projectDialog === 'create'
+        ? [...items, next]
+        : items.map(item => item.id === next.id ? next : item));
+      setProjectDialog(null);
+      if (projectDialog === 'create') {
+        await draftRecovery.saveNow();
+        setCurrentProject(next);
+        setProjectId(next.id);
+      } else {
+        setCurrentProject(next);
+      }
+    } catch (error) {
+      void message.error(`项目操作失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
+  const removeProject = async () => {
+    const current = currentProject;
+    const repository = projectRepositoryRef.current;
+    if (!current || current.isDefault || !repository || !workspaceId) return;
+    if (!window.confirm(`确定删除项目“${current.name}”吗？`)) return;
+    try {
+      await repository.remove(workspaceId, current.id);
+      const remaining = projects.filter(project => project.id !== current.id);
+      setProjects(remaining);
+      const fallback = remaining.find(project => project.isDefault) ?? remaining[0];
+      if (fallback) await switchProject(fallback.id);
+    } catch (error) {
+      void message.error(`删除项目失败：${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
 
   const aiConfig = useMemo<ReactAolesAiConfig & { storageKey: string }>(() => ({
     endpoint: aiEndpoint,
@@ -342,10 +457,28 @@ function AppContent() {
         <div className="brand">
           <img className="brand-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="Pixo" />
           <span className="header-title font-semibold">Aoles GL React</span>
+          {currentProject && <span className="project-label">{currentProject.name}</span>}
         </div>
 
         <div className="header-actions">
           <DraftManagerDialog recovery={draftRecovery} />
+          {workspaceId && projects.length > 0 && (
+            <Select
+              size="small"
+              value={projectId}
+              loading={projectsLoading}
+              className="project-select"
+              options={projects.map(project => ({ label: project.name, value: project.id }))}
+              onChange={value => { void switchProject(value); }}
+            />
+          )}
+          {workspaceId && <Button size="small" onClick={() => { setProjectName(''); setProjectDialog('create'); }}>新建项目</Button>}
+          {currentProject && !currentProject.isDefault && (
+            <>
+              <Button size="small" onClick={() => { setProjectName(currentProject.name); setProjectDialog('rename'); }}>重命名</Button>
+              <Button size="small" danger onClick={() => { void removeProject(); }}>删除项目</Button>
+            </>
+          )}
           {wasmRuntimeInited && <ExportButton />}
 
           <Button
@@ -392,6 +525,15 @@ function AppContent() {
           </button>
         </div>
       </div>
+      <Modal
+        open={projectDialog !== null}
+        title={projectDialog === 'create' ? '新建项目' : '重命名项目'}
+        confirmLoading={projectsLoading}
+        onCancel={() => setProjectDialog(null)}
+        onOk={() => { void submitProject(); }}
+      >
+        <Input value={projectName} maxLength={80} placeholder="项目名称" onChange={event => setProjectName(event.target.value)} onPressEnter={() => { void submitProject(); }} />
+      </Modal>
 
       <Modal
         title="资源健康检查"

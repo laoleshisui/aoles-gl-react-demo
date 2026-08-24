@@ -60,6 +60,30 @@ html, body {
   overflow-y: auto;
 }
 
+.draft-sync-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  color: var(--aoles-color-text-muted);
+  font-size: 12px;
+}
+
+.draft-sync-row.is-conflict,
+.draft-sync-row.is-error {
+  color: #cf1322;
+}
+
+.draft-sync-row.is-dirty,
+.draft-sync-row.is-syncing {
+  color: #d48806;
+}
+
+.draft-sync-row.is-synced {
+  color: #389e0d;
+}
+
 .draft-list-item {
   display: flex;
   min-height: 58px;

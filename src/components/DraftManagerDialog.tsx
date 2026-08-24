@@ -17,6 +17,7 @@ import {
   SaveOutlined,
 } from '@ant-design/icons';
 import type { DraftRecoveryState } from '@aoles-gl/react';
+import type { DraftSyncState } from '@aoles-gl/core';
 
 interface DraftManagerDialogProps {
   recovery: DraftRecoveryState;
@@ -28,10 +29,58 @@ export default function DraftManagerDialog({ recovery }: DraftManagerDialogProps
   const [title, setTitle] = useState('');
   const [saving, setSaving] = useState(false);
   const [busyDraftId, setBusyDraftId] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [syncStates, setSyncStates] = useState<Record<string, DraftSyncState>>({});
+
+  const refresh = async () => {
+    await recovery.refreshDrafts();
+  };
+
+  useEffect(() => setSyncStates(recovery.syncStates), [recovery.syncStates]);
 
   useEffect(() => {
-    if (open) void recovery.refreshDrafts();
-  }, [open, recovery.refreshDrafts]);
+    if (open) void refresh();
+  }, [open]);
+
+  const syncStateLabel = (status?: DraftSyncState['status']) => status ? ({
+    'local-only': '仅本地', dirty: '待同步', syncing: '同步中', synced: '已同步',
+    conflict: '有冲突', error: '同步失败', deleted: '待删除',
+  } as Record<DraftSyncState['status'], string>)[status] : '云端';
+  const syncStatus = Object.values(syncStates).some(state => state.status === 'conflict')
+    ? 'conflict'
+    : Object.values(syncStates).some(state => state.status === 'error')
+      ? 'error'
+      : Object.values(syncStates).some(state => state.status === 'syncing')
+        ? 'syncing'
+        : Object.values(syncStates).some(state => state.status === 'dirty' || state.status === 'deleted')
+          ? 'dirty'
+          : recovery.drafts.length ? 'synced' : 'local-only';
+
+  const syncNow = async () => {
+    setSyncing(true);
+    try {
+      await recovery.syncNow();
+      await refresh();
+      void message.success('云端同步完成');
+    } catch (error) {
+      void message.error(`云端同步失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const resolveConflict = async (draftId: string, resolution: 'keep-local' | 'use-remote') => {
+    setBusyDraftId(draftId);
+    try {
+      await recovery.resolveConflict(draftId, resolution);
+      await refresh();
+      void message.success(resolution === 'keep-local' ? '已保留本地版本，等待重新同步' : '已采用云端版本');
+    } catch (error) {
+      void message.error(`处理冲突失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setBusyDraftId('');
+    }
+  };
 
   const saveSnapshot = async () => {
     setSaving(true);
@@ -105,8 +154,13 @@ export default function DraftManagerDialog({ recovery }: DraftManagerDialogProps
           <Button
             aria-label="刷新草稿列表"
             icon={<ReloadOutlined />}
-            onClick={() => { void recovery.refreshDrafts(); }}
+            onClick={() => { void refresh(); }}
           />
+        </div>
+
+        <div className={`draft-sync-row is-${syncStatus}`}>
+          <span>{syncStateLabel(syncStatus as DraftSyncState['status'])}</span>
+          <Button size="small" loading={syncing} onClick={() => { void syncNow(); }}>同步云端</Button>
         </div>
 
         <Spin spinning={recovery.status === 'restoring'}>
@@ -122,9 +176,18 @@ export default function DraftManagerDialog({ recovery }: DraftManagerDialogProps
                       <strong>{draft.title || (isAutosave ? '自动保存' : '未命名草稿')}</strong>
                       {isAutosave && <Tag color="blue">自动</Tag>}
                     </div>
-                    <span>{new Date(draft.updatedAt).toLocaleString()} · 版本 {draft.revision}</span>
+                    <span>
+                      {new Date(draft.updatedAt).toLocaleString()} · 版本 {draft.revision}
+                      {syncStates[draft.draftId] && ` · ${syncStateLabel(syncStates[draft.draftId].status)}`}
+                    </span>
                   </div>
                   <div className="draft-list-actions">
+                    {syncStates[draft.draftId]?.status === 'conflict' && (
+                      <>
+                        <Button size="small" onClick={() => { void resolveConflict(draft.draftId, 'keep-local'); }}>保留本地</Button>
+                        <Button size="small" onClick={() => { void resolveConflict(draft.draftId, 'use-remote'); }}>采用云端</Button>
+                      </>
+                    )}
                     <Popconfirm
                       title="恢复这个草稿？"
                       description="当前编辑内容会先保存到自动草稿。"
