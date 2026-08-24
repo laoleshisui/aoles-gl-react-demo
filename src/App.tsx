@@ -43,6 +43,13 @@ import {
   type AolesAiProfilesResponse,
   type ReactAolesAiConfig,
 } from '@aoles-gl/react/ai';
+import {
+  createArtifactHttpRepository,
+  createShaderLibraryRepository,
+  createWorkspaceRepository,
+  type ArtifactRepository,
+  type ShaderLibraryRepository,
+} from '@aoles-gl/core';
 import ExportButton from './components/ExportButton';
 import AiApiKeyConfig from './components/AiApiKeyConfig';
 import DraftManagerDialog from './components/DraftManagerDialog';
@@ -76,6 +83,9 @@ function AppContent() {
   const [aiOpen, setAiOpen] = useState(true);
   const [healthCheckOpen, setHealthCheckOpen] = useState(false);
   const [apiKey, setApiKey] = useState('');
+  const [workspaceId, setWorkspaceId] = useState('');
+  const [artifactRepository, setArtifactRepository] = useState<ArtifactRepository>();
+  const [shaderLibraryRepository, setShaderLibraryRepository] = useState<ShaderLibraryRepository>();
   const [apiKeyEditorOpen, setApiKeyEditorOpen] = useState(true);
   const [aiProfile, setAiProfile] = useState<AolesAiModelProfile>('balanced');
   const [aiProfiles, setAiProfiles] = useState<AolesAiProfileInfo[]>([]);
@@ -92,6 +102,7 @@ function AppContent() {
   resourcesRef.current = resources;
 
   const agentBaseUrl = import.meta.env.VITE_API_AGENT?.trim().replace(/\/+$/, '') ?? '';
+  const dataServerBaseUrl = import.meta.env.VITE_API_DATA_SERVER?.trim().replace(/\/+$/, '') ?? '';
   const aiEnabled = Boolean(agentBaseUrl);
   const aiAuthenticated = Boolean(apiKey);
   const aiEndpoint = agentBaseUrl.endsWith('/api/chat')
@@ -195,6 +206,28 @@ function AppContent() {
     return () => abortController.abort();
   }, [apiKey, aiProfilesEndpoint, message, profilesReloadVersion]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setWorkspaceId('');
+    setArtifactRepository(undefined);
+    setShaderLibraryRepository(undefined);
+    if (!apiKey || !dataServerBaseUrl) return () => { cancelled = true; };
+    const options = {
+      baseUrl: dataServerBaseUrl,
+      getAccessToken: () => apiKeyRef.current,
+      authorizationScheme: 'Api-Key' as const,
+    };
+    void createWorkspaceRepository(options).ensurePersonal().then(workspace => {
+      if (cancelled) return;
+      setWorkspaceId(workspace.id);
+      setArtifactRepository(createArtifactHttpRepository(options));
+      setShaderLibraryRepository(createShaderLibraryRepository(options));
+    }).catch(error => {
+      if (!cancelled) void message.warning(`数据服务连接失败：${error instanceof Error ? error.message : String(error)}`);
+    });
+    return () => { cancelled = true; };
+  }, [apiKey, dataServerBaseUrl, message]);
+
   const aiConfig = useMemo<ReactAolesAiConfig & { storageKey: string }>(() => ({
     endpoint: aiEndpoint,
     storageKey: 'aoles-gl-react-demo:ai-sessions',
@@ -202,6 +235,16 @@ function AppContent() {
     headers: (): HeadersInit => apiKeyRef.current
       ? { Authorization: `Api-Key ${apiKeyRef.current}` }
       : {},
+    ...(workspaceId && artifactRepository && shaderLibraryRepository ? {
+      shaderDesign: {
+        register: true,
+        artifactPersistence: {
+          workspaceId,
+          repository: artifactRepository,
+          shaderLibrary: shaderLibraryRepository,
+        },
+      },
+    } : {}),
     getAssets: () => resourcesRef.current
       .filter(resource => (
         resource.status === 'ready'
@@ -235,7 +278,7 @@ function AppContent() {
         void message.error(`AI 请求失败：${errorMessage}`);
       }
     },
-  }), [aiEndpoint, message]);
+  }), [aiEndpoint, message, workspaceId, artifactRepository, shaderLibraryRepository]);
 
   const profileMenuItems = useMemo<MenuProps['items']>(() => aiProfiles.map(profile => ({
     key: profile.id,
