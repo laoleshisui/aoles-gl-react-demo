@@ -13,6 +13,9 @@ import {
   DeleteOutlined,
   FileTextOutlined,
   FolderOpenOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  EditOutlined,
   ReloadOutlined,
   SaveOutlined,
 } from '@ant-design/icons';
@@ -31,6 +34,8 @@ export default function DraftManagerDialog({ recovery }: DraftManagerDialogProps
   const [busyDraftId, setBusyDraftId] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [syncStates, setSyncStates] = useState<Record<string, DraftSyncState>>({});
+  const [editingDraftId, setEditingDraftId] = useState('');
+  const [editingTitle, setEditingTitle] = useState('');
 
   const refresh = async () => {
     await recovery.refreshDrafts();
@@ -122,6 +127,17 @@ export default function DraftManagerDialog({ recovery }: DraftManagerDialogProps
     }
   };
 
+  const renameDraft = async (draftId: string) => {
+    try {
+      await recovery.renameDraft(draftId, editingTitle);
+      setEditingDraftId('');
+      setEditingTitle('');
+      void message.success('草稿名称已更新');
+    } catch (error) {
+      void message.error(`重命名失败：${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+
   return (
     <>
       <Button icon={<FileTextOutlined />} onClick={() => setOpen(true)}>
@@ -160,6 +176,7 @@ export default function DraftManagerDialog({ recovery }: DraftManagerDialogProps
 
         <div className={`draft-sync-row is-${syncStatus}`}>
           <span>{syncStateLabel(syncStatus as DraftSyncState['status'])}</span>
+          {recovery.pendingSyncCount > 0 && <span>待同步 {recovery.pendingSyncCount}</span>}
           <Button size="small" loading={syncing} onClick={() => { void syncNow(); }}>同步云端</Button>
         </div>
 
@@ -173,7 +190,43 @@ export default function DraftManagerDialog({ recovery }: DraftManagerDialogProps
                 <div className="draft-list-item" key={draft.draftId}>
                   <div className="draft-list-copy">
                     <div className="draft-list-title">
-                      <strong>{draft.title || (isAutosave ? '自动保存' : '未命名草稿')}</strong>
+                      {editingDraftId === draft.draftId ? (
+                        <>
+                          <Input
+                            size="small"
+                            value={editingTitle}
+                            maxLength={80}
+                            aria-label="草稿名称"
+                            onChange={event => setEditingTitle(event.target.value)}
+                            onPressEnter={() => { void renameDraft(draft.draftId); }}
+                          />
+                          <Button
+                            type="text"
+                            icon={<CheckOutlined />}
+                            aria-label="保存名称"
+                            onClick={() => { void renameDraft(draft.draftId); }}
+                          />
+                          <Button
+                            type="text"
+                            icon={<CloseOutlined />}
+                            aria-label="取消重命名"
+                            onClick={() => { setEditingDraftId(''); setEditingTitle(''); }}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <strong>{draft.title || (isAutosave ? '自动保存' : '未命名草稿')}</strong>
+                          {!isAutosave && (
+                            <Button
+                              type="text"
+                              icon={<EditOutlined />}
+                              title="重命名草稿"
+                              aria-label="重命名草稿"
+                              onClick={() => { setEditingDraftId(draft.draftId); setEditingTitle(draft.title ?? ''); }}
+                            />
+                          )}
+                        </>
+                      )}
                       {isAutosave && <Tag color="blue">自动</Tag>}
                     </div>
                     <span>

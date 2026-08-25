@@ -47,6 +47,8 @@ import {
 } from '@aoles-gl/react/ai';
 import {
   createArtifactHttpRepository,
+  createArtifactResourceResolver,
+  createResourceCloudSyncController,
   createDraftHttpAdapter,
   createProjectRepository,
   createShaderLibraryRepository,
@@ -58,6 +60,7 @@ import {
 import ExportButton from './components/ExportButton';
 import AiApiKeyConfig from './components/AiApiKeyConfig';
 import DraftManagerDialog from './components/DraftManagerDialog';
+import WorkspaceContextPanel from './components/WorkspaceContextPanel';
 import './App.css';
 
 const AI_PROFILE_LABELS = {
@@ -83,11 +86,13 @@ function AppContent() {
   const { message } = AntdApp.useApp();
   const pageStore = usePageState();
   const previewStore = usePreviewState();
-  const { resources } = useResourceState();
+  const { resources, manager: resourceManager } = useResourceState();
   const [aiOpen, setAiOpen] = useState(true);
   const [healthCheckOpen, setHealthCheckOpen] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [workspaceId, setWorkspaceId] = useState('');
+  const [workspaceName, setWorkspaceName] = useState('');
+  const [workspaceRole, setWorkspaceRole] = useState('');
   const legacyProjectId = 'aoles-gl-react-demo:project:default';
   const legacyAutosaveId = 'aoles-gl-react-demo:autosave';
   const [projectId, setProjectId] = useState(legacyProjectId);
@@ -99,6 +104,9 @@ function AppContent() {
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [artifactRepository, setArtifactRepository] = useState<ArtifactRepository>();
   const [shaderLibraryRepository, setShaderLibraryRepository] = useState<ShaderLibraryRepository>();
+  const [cloudArtifacts, setCloudArtifacts] = useState<import('@aoles-gl/core').ArtifactRecord[]>([]);
+  const [cloudArtifactsLoading, setCloudArtifactsLoading] = useState(false);
+  const [cloudArtifactsError, setCloudArtifactsError] = useState('');
   const [apiKeyEditorOpen, setApiKeyEditorOpen] = useState(true);
   const [aiProfile, setAiProfile] = useState<AolesAiModelProfile>('balanced');
   const [aiProfiles, setAiProfiles] = useState<AolesAiProfileInfo[]>([]);
@@ -113,6 +121,24 @@ function AppContent() {
   apiKeyRef.current = apiKey;
   aiProfileRef.current = aiProfile;
   resourcesRef.current = resources;
+
+  const resourceResolver = useMemo(() => async (
+    reference: import('@aoles-gl/core').ResourceAssetReference,
+    context: { projectId: string },
+  ) => {
+    if (!artifactRepository || !workspaceId) return null;
+    return createArtifactResourceResolver({ repository: artifactRepository, workspaceId })(reference, context);
+  }, [artifactRepository, workspaceId]);
+  const resourceCloudSync = useMemo(() => (
+    artifactRepository && workspaceId && projectId
+      ? createResourceCloudSyncController({
+        manager: resourceManager,
+        repository: artifactRepository,
+        workspaceId,
+        projectId,
+      })
+      : undefined
+  ), [artifactRepository, projectId, resourceManager, workspaceId]);
 
   const agentBaseUrl = import.meta.env.VITE_API_AGENT?.trim().replace(/\/+$/, '') ?? '';
   const dataServerBaseUrl = import.meta.env.VITE_API_DATA_SERVER?.trim().replace(/\/+$/, '') ?? '';
@@ -140,6 +166,7 @@ function AppContent() {
   const draftRecovery = useDraftRecovery({
     draftSync,
     projectId,
+    resourceResolver,
   });
   const { migrateProject } = draftRecovery;
 
@@ -242,12 +269,15 @@ function AppContent() {
   useEffect(() => {
     let cancelled = false;
     setWorkspaceId('');
+    setWorkspaceName('');
+    setWorkspaceRole('');
     setCurrentProject(undefined);
     setProjects([]);
     projectRepositoryRef.current = undefined;
     setProjectId(legacyProjectId);
     setArtifactRepository(undefined);
     setShaderLibraryRepository(undefined);
+    setCloudArtifacts([]);
     if (!apiKey || !dataServerBaseUrl) return () => { cancelled = true; };
     const options = {
       baseUrl: dataServerBaseUrl,
@@ -269,6 +299,8 @@ function AppContent() {
       );
       if (cancelled) return;
       setCurrentProject(defaultProject);
+      setWorkspaceName(workspace.name);
+      setWorkspaceRole(workspace.role);
       setProjects(projectList);
       projectRepositoryRef.current = projectRepository;
       setProjectId(defaultProject.id);
@@ -281,6 +313,57 @@ function AppContent() {
     });
     return () => { cancelled = true; };
   }, [apiKey, dataServerBaseUrl, legacyProjectId, message, migrateProject]);
+
+  const loadCloudArtifacts = async () => {
+    if (!workspaceId || !projectId || !artifactRepository) {
+      setCloudArtifacts([]);
+      return;
+    }
+    setCloudArtifactsLoading(true);
+    setCloudArtifactsError('');
+    try {
+      setCloudArtifacts((await artifactRepository.list(workspaceId, { projectId })).artifacts);
+    } catch (error) {
+      setCloudArtifactsError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setCloudArtifactsLoading(false);
+    }
+  };
+
+  useEffect(() => { void loadCloudArtifacts(); }, [workspaceId, projectId, artifactRepository]);
+
+  const draftStatus = useMemo(() => {
+    const states = Object.values(draftRecovery.syncStates) as Array<{ status?: string }>;
+    if (states.some(state => state.status === 'conflict')) return '有冲突';
+    if (states.some(state => state.status === 'dirty' || state.status === 'syncing')) return '同步中';
+    if (states.some(state => state.status === 'synced') || draftRecovery.drafts.length) return '已同步';
+    return '仅本地';
+  }, [draftRecovery.drafts, draftRecovery.syncStates]);
+
+  const moveCloudArtifact = async (artifact: import('@aoles-gl/core').ArtifactRecord) => {
+    if (!workspaceId || !artifactRepository || !projectId) return;
+    try {
+      const updated = await artifactRepository.updateScope(workspaceId, artifact.id, artifact.scope === 'workspace'
+        ? { scope: 'project', projectId }
+        : { scope: 'workspace' });
+      setCloudArtifacts(items => items.map(item => item.id === updated.id ? updated : item));
+      void message.success(updated.scope === 'workspace' ? '资源已转为 Workspace 共享' : '资源已归属当前项目');
+    } catch (error) {
+      const status = (error as { status?: number }).status;
+      void message.error(status === 409 ? '资源仍被项目 Shader 引用，暂不能迁移' : `资源迁移失败：${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+
+  const removeCloudArtifact = async (artifact: import('@aoles-gl/core').ArtifactRecord) => {
+    if (!workspaceId || !artifactRepository) return;
+    try {
+      await artifactRepository.remove(workspaceId, artifact.id);
+      setCloudArtifacts(items => items.filter(item => item.id !== artifact.id));
+      void message.success('云端资源已删除');
+    } catch (error) {
+      void message.error(`删除资源失败：${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
 
   const switchProject = async (nextProjectId: string) => {
     const next = projects.find(project => project.id === nextProjectId);
@@ -339,7 +422,10 @@ function AppContent() {
       const fallback = remaining.find(project => project.isDefault) ?? remaining[0];
       if (fallback) await switchProject(fallback.id);
     } catch (error) {
-      void message.error(`删除项目失败：${error instanceof Error ? error.message : String(error)}`);
+      const status = (error as { status?: number }).status;
+      void message.error(status === 409
+        ? '该项目仍有项目资源或项目 Shader，请先迁移资源到其他项目或 Workspace 共享后再删除'
+        : `删除项目失败：${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
@@ -355,6 +441,8 @@ function AppContent() {
         register: true,
         artifactPersistence: {
           workspaceId,
+          projectId,
+          scope: 'project',
           repository: artifactRepository,
           shaderLibrary: shaderLibraryRepository,
         },
@@ -525,6 +613,19 @@ function AppContent() {
           </button>
         </div>
       </div>
+      <WorkspaceContextPanel
+        workspaceId={workspaceId}
+        workspaceName={workspaceName}
+        workspaceRole={workspaceRole}
+        projectName={currentProject?.name ?? ''}
+        draftStatus={draftStatus}
+        artifacts={cloudArtifacts}
+        loading={cloudArtifactsLoading}
+        error={cloudArtifactsError}
+        onRefresh={() => { void loadCloudArtifacts(); }}
+        onMove={artifact => { void moveCloudArtifact(artifact); }}
+        onRemove={artifact => { void removeCloudArtifact(artifact); }}
+      />
       <Modal
         open={projectDialog !== null}
         title={projectDialog === 'create' ? '新建项目' : '重命名项目'}
@@ -549,7 +650,7 @@ function AppContent() {
       {/* Main layout */}
       <div className="main-content">
         {/* Left: Resources */}
-        <ResourceContainer className="resources-section card-style" />
+        <ResourceContainer className="resources-section card-style" cloudSync={resourceCloudSync} />
 
         {/* Right: Preview + Attr + Track */}
         <div className="right-section">

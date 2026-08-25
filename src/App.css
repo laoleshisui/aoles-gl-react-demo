@@ -48,6 +48,33 @@ html, body {
   gap: 12px;
 }
 
+.workspace-context-panel {
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+  background: #fff;
+}
+.dark .workspace-context-panel { border-color: #2d333c; background: #1b1f26; }
+.workspace-context-heading, .workspace-context-tree, .workspace-context-meta, .cloud-resource-toolbar { display: flex; align-items: center; }
+.workspace-context-heading { justify-content: space-between; gap: 12px; }
+.workspace-context-heading > div { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.workspace-context-heading strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.context-eyebrow { color: #6b7280; font-size: 11px; text-transform: uppercase; }
+.context-role { color: #6b7280; font-size: 11px; }
+.workspace-context-tree { gap: 7px; margin-top: 8px; font-size: 12px; }
+.context-branch { color: #9ca3af; }
+.context-node { padding: 3px 7px; border-radius: 5px; }
+.context-node-workspace { color: #075985; background: #e0f2fe; }
+.context-node-project { color: #166534; background: #dcfce7; }
+.context-node-draft { color: #92400e; background: #fef3c7; }
+.workspace-context-meta { flex-wrap: wrap; gap: 12px; margin-top: 8px; color: #6b7280; font-size: 11px; }
+.cloud-resource-toolbar { justify-content: space-between; margin-bottom: 12px; color: #6b7280; font-size: 12px; }
+.cloud-resource-list { max-height: 52vh; overflow-y: auto; }
+.cloud-resource-list .ant-list-item-meta-title { margin-bottom: 3px; }
+.dark .workspace-context-meta, .dark .cloud-resource-toolbar, .dark .context-eyebrow, .dark .context-role { color: #9ca3af; }
+
 .draft-save-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto 32px;
