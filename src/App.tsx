@@ -305,7 +305,18 @@ function AppContent() {
       projectRepositoryRef.current = projectRepository;
       setProjectId(defaultProject.id);
       setWorkspaceId(workspace.id);
-      setArtifactRepository(createArtifactHttpRepository(options));
+      const nextArtifactRepository = createArtifactHttpRepository(options);
+      setArtifactRepository(nextArtifactRepository);
+      await draftRecovery.setProjectId(defaultProject.id);
+      await resourceManager.ready;
+      const nextCloudSync = createResourceCloudSyncController({
+        manager: resourceManager,
+        repository: nextArtifactRepository,
+        workspaceId: workspace.id,
+        projectId: defaultProject.id,
+      });
+      // Metadata-only reconciliation restores "已上传" after a refresh.
+      await nextCloudSync.reconcile();
       setShaderLibraryRepository(createShaderLibraryRepository(options));
       if (migratedCount > 0) void message.info(`已将 ${migratedCount} 个本地草稿迁移到默认项目`);
     }).catch(error => {
@@ -331,6 +342,13 @@ function AppContent() {
   };
 
   useEffect(() => { void loadCloudArtifacts(); }, [workspaceId, projectId, artifactRepository]);
+
+  useEffect(() => {
+    if (!resourceCloudSync) return;
+    void resourceManager.ready
+      .then(() => resourceCloudSync.reconcile())
+      .catch(error => console.warn('[Aoles ResourceManager] cloud artifact reconciliation failed', error));
+  }, [resourceCloudSync, resourceManager]);
 
   const draftStatus = useMemo(() => {
     const states = Object.values(draftRecovery.syncStates) as Array<{ status?: string }>;

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Button, Empty, List, Modal, Popconfirm, Space, Tag, Alert } from 'antd';
+import { Button, Empty, List, Modal, Popconfirm, Tag, Alert } from 'antd';
 import type { ArtifactRecord } from '@aoles-gl/core';
 
 interface Props {
@@ -47,9 +47,9 @@ export default function WorkspaceContextPanel(props: Props) {
         <span>本地资源由编辑器管理，云端资源由 Workspace 管理</span>
       </div>
       <Modal open={open} title="云端资源" width={760} footer={null} onCancel={() => setOpen(false)}>
-        <Space className="cloud-resource-toolbar" justify="space-between" style={{ width: '100%' }}>
+        <div className="cloud-resource-toolbar" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>当前项目可见资源：{props.artifacts.length}</span><Button size="small" loading={props.loading} onClick={props.onRefresh}>刷新</Button>
-        </Space>
+        </div>
         {props.error && <Alert type="warning" showIcon closable={false} message={props.error} style={{ marginTop: 12 }} />}
         {!props.loading && !props.artifacts.length ? <Empty description="当前项目暂无云端资源" /> : (
           <List loading={props.loading} className="cloud-resource-list" dataSource={props.artifacts} renderItem={artifact => (
