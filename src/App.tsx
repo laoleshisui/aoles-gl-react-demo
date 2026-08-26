@@ -15,6 +15,7 @@ import {
   type MenuProps,
 } from 'antd';
 import {
+  AppstoreOutlined,
   CheckOutlined,
   DownOutlined,
   LoadingOutlined,
@@ -61,6 +62,7 @@ import ExportButton from './components/ExportButton';
 import AiApiKeyConfig from './components/AiApiKeyConfig';
 import DraftManagerDialog from './components/DraftManagerDialog';
 import WorkspaceContextPanel from './components/WorkspaceContextPanel';
+import SkillMarketplaceDialog from './components/SkillMarketplaceDialog';
 import './App.css';
 
 const AI_PROFILE_LABELS = {
@@ -89,6 +91,7 @@ function AppContent() {
   const { resources, manager: resourceManager } = useResourceState();
   const [aiOpen, setAiOpen] = useState(true);
   const [healthCheckOpen, setHealthCheckOpen] = useState(false);
+  const [skillMarketplaceOpen, setSkillMarketplaceOpen] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [workspaceId, setWorkspaceId] = useState('');
   const [workspaceName, setWorkspaceName] = useState('');
@@ -595,6 +598,10 @@ function AppContent() {
             资源健康
           </Button>
 
+          <Button size="small" icon={<AppstoreOutlined />} onClick={() => setSkillMarketplaceOpen(true)}>
+            Skill
+          </Button>
+
           {!wasmRuntimeInited && (
             <span className="runtime-status runtime-status-loading text-sm flex items-center gap-1">
               <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -664,6 +671,8 @@ function AppContent() {
       >
         <HealthCheckPanel />
       </Modal>
+
+      <SkillMarketplaceDialog open={skillMarketplaceOpen} dataServerBaseUrl={dataServerBaseUrl} apiKey={apiKey} onClose={() => setSkillMarketplaceOpen(false)} />
 
       {/* Main layout */}
       <div className="main-content">

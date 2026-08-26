@@ -48,6 +48,12 @@ html, body {
   gap: 12px;
 }
 
+.skill-marketplace-dialog { top: 4vh; max-width: calc(100vw - 24px); padding-bottom: 0; }
+.skill-marketplace-dialog .ant-modal-body { padding-top: 8px; }
+.skill-marketplace-dialog__content { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; height: min(760px, calc(92vh - 82px)); min-height: 440px; }
+.skill-marketplace-dialog__content > .aoles-skill-marketplace { min-height: 0; }
+.skill-marketplace-dialog__notice { flex-shrink: 0; }
+
 .workspace-context-panel {
   flex-shrink: 0;
   margin-bottom: 10px;
@@ -522,6 +528,9 @@ html, body {
 }
 
 @media (max-width: 720px) {
+  .skill-marketplace-dialog { top: 8px; max-width: calc(100vw - 16px); margin: 0 auto; }
+  .skill-marketplace-dialog__content { height: calc(100vh - 92px); min-height: 0; }
+
   .header-bar {
     height: auto;
     min-height: 44px;
