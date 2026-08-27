@@ -30,6 +30,8 @@ import {
   AttributeContainer,
   ResizablePanel,
   HealthCheckPanel,
+  AolesLogin,
+  type AolesAuthClient,
 } from '@aoles-gl/react';
 import {
   AolesAiPanel,
@@ -48,7 +50,6 @@ import {
   type WorkspaceProject,
 } from '@aoles-gl/core';
 import ExportButton from './components/ExportButton';
-import AiApiKeyConfig from './components/AiApiKeyConfig';
 import DraftManagerDialog from './components/DraftManagerDialog';
 import WorkspaceContextPanel from './components/WorkspaceContextPanel';
 import SkillMarketplaceDialog from './components/SkillMarketplaceDialog';
@@ -80,7 +81,6 @@ function AppContent() {
   const [cloudArtifacts, setCloudArtifacts] = useState<import('@aoles-gl/core').ArtifactRecord[]>([]);
   const [cloudArtifactsLoading, setCloudArtifactsLoading] = useState(false);
   const [cloudArtifactsError, setCloudArtifactsError] = useState('');
-  const [apiKeyEditorOpen, setApiKeyEditorOpen] = useState(true);
   const apiKeyRef = useRef(apiKey);
   const resourcesRef = useRef(resources);
 
@@ -109,6 +109,20 @@ function AppContent() {
   const dataServerBaseUrl = import.meta.env.VITE_API_DATA_SERVER?.trim().replace(/\/+$/, '') ?? '';
   const aiEnabled = Boolean(agentBaseUrl);
   const aiAuthenticated = Boolean(apiKey);
+  const apiKeyAuthClient = useMemo<AolesAuthClient>(() => ({
+    async sendCode() { throw new Error('当前 Demo 仅启用 API Key 登录'); },
+    async loginPassword() { throw new Error('当前 Demo 仅启用 API Key 登录'); },
+    async loginSms() { throw new Error('当前 Demo 仅启用 API Key 登录'); },
+    async loginApiKey({ apiKey: value }) {
+      if (dataServerBaseUrl) {
+        const response = await fetch(`${dataServerBaseUrl}/api-keys/validate-header/`, {
+          headers: { Authorization: `Api-Key ${value}` },
+        });
+        if (!response.ok) throw new Error('API Key 无效、已过期或已被撤销');
+      }
+      return { accessToken: value };
+    },
+  }), [dataServerBaseUrl]);
   const aiEndpoint = agentBaseUrl.endsWith('/api/chat')
     ? agentBaseUrl
     : `${agentBaseUrl}/api/chat`;
@@ -547,21 +561,14 @@ function AppContent() {
           <aside className="ai-section">
             {aiEnabled ? (
               <div className="ai-panel-shell">
-                <AiApiKeyConfig
-                  configured={Boolean(apiKey)}
-                  authenticated={aiAuthenticated}
-                  expanded={apiKeyEditorOpen || !aiAuthenticated}
-                  authLabel="API-Key（当前标签页）"
-                  onSave={(value) => {
-                    setApiKey(value);
-                    setApiKeyEditorOpen(false);
-                  }}
-                  onEdit={() => setApiKeyEditorOpen(true)}
-                  onCancel={() => setApiKeyEditorOpen(false)}
-                  onClear={() => {
-                    setApiKey('');
-                    setApiKeyEditorOpen(true);
-                  }}
+                <AolesLogin
+                  client={apiKeyAuthClient}
+                  defaultMode="api-key"
+                  modes={['api-key']}
+                  socialProviders={[]}
+                  title="连接 PixoClip AI"
+                  subtitle="使用 API Key 连接 AI 与数据服务"
+                  onSuccess={({ accessToken }) => setApiKey(accessToken)}
                 />
                 {aiAuthenticated && (
                   <AolesAiPanel config={aiConfig} />

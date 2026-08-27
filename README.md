@@ -21,7 +21,7 @@ pnpm dev
 
 ## AI 助手
 
-Demo 右侧集成了 `@aoles-gl/react/ai`。本地启动 Hono 服务后，在
+Demo 右侧集成了 `@aoles-gl/react/ai`，档位选择器由 package 内置提供。本地启动 Hono 服务后，在
 `.env.development.local` 中配置服务地址：
 
 ```env
