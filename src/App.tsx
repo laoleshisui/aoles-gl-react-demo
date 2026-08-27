@@ -7,24 +7,16 @@ import {
 import {
   App as AntdApp,
   Button,
-  Dropdown,
   Input,
   Modal,
   Select,
-  Tooltip,
-  type MenuProps,
 } from 'antd';
 import {
   AppstoreOutlined,
-  CheckOutlined,
-  DownOutlined,
-  LoadingOutlined,
-  LockOutlined,
   MoonOutlined,
   RobotOutlined,
   SafetyCertificateOutlined,
   SunOutlined,
-  ThunderboltOutlined,
 } from '@ant-design/icons';
 import {
   usePageState,
@@ -41,9 +33,6 @@ import {
 } from '@aoles-gl/react';
 import {
   AolesAiPanel,
-  type AolesAiModelProfile,
-  type AolesAiProfileInfo,
-  type AolesAiProfilesResponse,
   type ReactAolesAiConfig,
 } from '@aoles-gl/react/ai';
 import {
@@ -64,25 +53,6 @@ import DraftManagerDialog from './components/DraftManagerDialog';
 import WorkspaceContextPanel from './components/WorkspaceContextPanel';
 import SkillMarketplaceDialog from './components/SkillMarketplaceDialog';
 import './App.css';
-
-const AI_PROFILE_LABELS = {
-  fast: '快速',
-  balanced: '均衡',
-  reasoning: '深度',
-  media: '多媒体',
-} satisfies Record<AolesAiModelProfile, string>;
-
-const AI_PROFILE_DESCRIPTIONS = {
-  fast: '低延迟，适合简单操作',
-  balanced: '速度与质量均衡',
-  reasoning: '适合复杂编辑任务',
-  media: '侧重图片与视频理解',
-} satisfies Record<AolesAiModelProfile, string>;
-
-function isAiModelProfile(value: unknown): value is AolesAiModelProfile {
-  return typeof value === 'string'
-    && Object.prototype.hasOwnProperty.call(AI_PROFILE_LABELS, value);
-}
 
 function AppContent() {
   const { message } = AntdApp.useApp();
@@ -111,18 +81,10 @@ function AppContent() {
   const [cloudArtifactsLoading, setCloudArtifactsLoading] = useState(false);
   const [cloudArtifactsError, setCloudArtifactsError] = useState('');
   const [apiKeyEditorOpen, setApiKeyEditorOpen] = useState(true);
-  const [aiProfile, setAiProfile] = useState<AolesAiModelProfile>('balanced');
-  const [aiProfiles, setAiProfiles] = useState<AolesAiProfileInfo[]>([]);
-  const [aiProfilesLoading, setAiProfilesLoading] = useState(false);
-  const [aiProfilesError, setAiProfilesError] = useState('');
-  const [aiClientSelectable, setAiClientSelectable] = useState(false);
-  const [profilesReloadVersion, setProfilesReloadVersion] = useState(0);
   const apiKeyRef = useRef(apiKey);
-  const aiProfileRef = useRef(aiProfile);
   const resourcesRef = useRef(resources);
 
   apiKeyRef.current = apiKey;
-  aiProfileRef.current = aiProfile;
   resourcesRef.current = resources;
 
   const resourceResolver = useMemo(() => async (
@@ -150,7 +112,6 @@ function AppContent() {
   const aiEndpoint = agentBaseUrl.endsWith('/api/chat')
     ? agentBaseUrl
     : `${agentBaseUrl}/api/chat`;
-  const aiProfilesEndpoint = `${aiEndpoint.slice(0, -'/api/chat'.length)}/api/ai/profiles`;
   const draftSync = useMemo(() => {
     if (!workspaceId || !dataServerBaseUrl) return undefined;
     const options = {
@@ -194,80 +155,6 @@ function AppContent() {
   const wasmRuntimeInited = previewStore(
     (state: any) => state.wasmRuntimeInited as boolean
   );
-
-  const aiProfileMenuEnabled = (
-    aiClientSelectable
-    && !aiProfilesLoading
-    && !aiProfilesError
-    && aiProfiles.length > 0
-  );
-  const aiProfileButtonLabel = aiProfilesLoading
-    ? '读取档位'
-    : aiProfilesError
-      ? '档位不可用'
-      : aiProfiles.length
-        ? AI_PROFILE_LABELS[aiProfile]
-        : '暂无档位';
-  const aiProfileTooltip = aiProfilesLoading
-    ? '正在读取服务端档位配置'
-    : aiProfilesError
-      ? '档位加载失败，请更换 API-Key 后重试'
-      : !aiProfiles.length
-        ? '服务端未提供可用档位'
-        : !aiClientSelectable
-          ? `服务端已锁定为${AI_PROFILE_LABELS[aiProfile]}档`
-          : '选择 AI 模型档位';
-
-  useEffect(() => {
-    if (!apiKey) {
-      setAiProfile('balanced');
-      setAiProfiles([]);
-      setAiProfilesLoading(false);
-      setAiProfilesError('');
-      setAiClientSelectable(false);
-      return;
-    }
-
-    const abortController = new AbortController();
-    setAiProfilesLoading(true);
-    setAiProfilesError('');
-
-    void fetch(aiProfilesEndpoint, {
-      headers: { Authorization: `Api-Key ${apiKey}` },
-      signal: abortController.signal,
-    }).then(async (response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = await response.json() as Partial<AolesAiProfilesResponse>;
-      const profiles = Array.isArray(payload.profiles)
-        ? payload.profiles.filter(profile => isAiModelProfile(profile?.id))
-        : [];
-      if (!profiles.length) throw new Error('服务端没有返回可用的 AI 模型档位');
-
-      const defaultProfile = isAiModelProfile(payload.defaultProfile)
-        && profiles.some(profile => profile.id === payload.defaultProfile)
-        ? payload.defaultProfile
-        : profiles[0].id;
-      const clientSelectable = payload.clientSelectable === true;
-
-      setAiProfiles(profiles);
-      setAiClientSelectable(clientSelectable);
-      setAiProfile(current => (
-        clientSelectable && profiles.some(profile => profile.id === current)
-          ? current
-          : defaultProfile
-      ));
-    }).catch((error: unknown) => {
-      if (abortController.signal.aborted) return;
-      setAiProfiles([]);
-      setAiClientSelectable(false);
-      setAiProfilesError(error instanceof Error ? error.message : String(error));
-      void message.warning('AI 模型档位加载失败，请检查服务地址和 API-Key。');
-    }).finally(() => {
-      if (!abortController.signal.aborted) setAiProfilesLoading(false);
-    });
-
-    return () => abortController.abort();
-  }, [apiKey, aiProfilesEndpoint, message, profilesReloadVersion]);
 
   useEffect(() => {
     let cancelled = false;
@@ -453,7 +340,7 @@ function AppContent() {
   const aiConfig = useMemo<ReactAolesAiConfig & { storageKey: string }>(() => ({
     endpoint: aiEndpoint,
     storageKey: 'aoles-gl-react-demo:ai-sessions',
-    getModelProfile: () => aiProfileRef.current,
+    showModelProfileSelector: true,
     headers: (): HeadersInit => apiKeyRef.current
       ? { Authorization: `Api-Key ${apiKeyRef.current}` }
       : {},
@@ -503,61 +390,6 @@ function AppContent() {
       }
     },
   }), [aiEndpoint, message, workspaceId, artifactRepository, shaderLibraryRepository]);
-
-  const profileMenuItems = useMemo<MenuProps['items']>(() => aiProfiles.map(profile => ({
-    key: profile.id,
-    label: (
-      <div className={`ai-profile-option ${profile.id === aiProfile ? 'active' : ''}`.trim()}>
-        <span className="ai-profile-check">
-          {profile.id === aiProfile && <CheckOutlined />}
-        </span>
-        <span className="ai-profile-option-copy">
-          <strong>{AI_PROFILE_LABELS[profile.id]}</strong>
-          <small>{AI_PROFILE_DESCRIPTIONS[profile.id]}</small>
-        </span>
-      </div>
-    ),
-  })), [aiProfile, aiProfiles]);
-
-  const profileTrigger = (
-    <button
-      type="button"
-      className={`ai-profile-trigger ${aiProfileMenuEnabled ? '' : 'disabled'}`.trim()}
-      aria-label={aiProfileTooltip}
-      aria-disabled={!aiProfileMenuEnabled}
-    >
-      {aiProfilesLoading ? <LoadingOutlined spin /> : <ThunderboltOutlined />}
-      <span className="ai-profile-trigger-label">{aiProfileButtonLabel}</span>
-      {aiProfileMenuEnabled ? <DownOutlined className="ai-profile-chevron" /> : (
-        aiProfiles.length > 0 && !aiProfilesError ? <LockOutlined /> : null
-      )}
-    </button>
-  );
-
-  const profileSelector = aiProfileMenuEnabled ? (
-    <Dropdown
-      trigger={['click']}
-      placement="topLeft"
-      classNames={{ root: 'ai-profile-dropdown' }}
-      getPopupContainer={trigger => trigger.closest('.aoles-ai-composer-box') ?? document.body}
-      menu={{
-        items: profileMenuItems,
-        selectable: true,
-        selectedKeys: [aiProfile],
-        onClick: ({ key }) => {
-          if (isAiModelProfile(key) && aiProfiles.some(profile => profile.id === key)) {
-            setAiProfile(key);
-          }
-        },
-      }}
-    >
-      {profileTrigger}
-    </Dropdown>
-  ) : (
-    <Tooltip title={aiProfileTooltip} placement="top">
-      {profileTrigger}
-    </Tooltip>
-  );
 
   return (
     <div className={`editor-root ${isDark ? 'dark' : ''}`}>
@@ -723,7 +555,6 @@ function AppContent() {
                   onSave={(value) => {
                     setApiKey(value);
                     setApiKeyEditorOpen(false);
-                    setProfilesReloadVersion(version => version + 1);
                   }}
                   onEdit={() => setApiKeyEditorOpen(true)}
                   onCancel={() => setApiKeyEditorOpen(false)}
@@ -733,7 +564,7 @@ function AppContent() {
                   }}
                 />
                 {aiAuthenticated && (
-                  <AolesAiPanel config={aiConfig} composerTools={profileSelector} />
+                  <AolesAiPanel config={aiConfig} />
                 )}
               </div>
             ) : (
