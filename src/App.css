@@ -54,6 +54,33 @@ html, body {
 .skill-marketplace-dialog__content > .aoles-skill-marketplace { min-height: 0; }
 .skill-marketplace-dialog__notice { flex-shrink: 0; }
 
+.payment-intro, .payment-intro__secure, .goods-option__top, .payment-summary, .payment-result { display: flex; }
+.payment-intro { align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.payment-intro .ant-typography { margin: 0; }
+.payment-intro__secure { flex-shrink: 0; align-items: center; }
+.goods-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.goods-option { min-width: 0; padding: 14px; border: 1px solid #e1e5ea; border-radius: 7px; background: #fff; color: #20242b; text-align: left; cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.goods-option:hover, .goods-option.is-selected { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22, 119, 255, .14); }
+.goods-option__top { align-items: center; justify-content: space-between; gap: 8px; }
+.goods-option__top strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.goods-option__top b { flex-shrink: 0; color: #1677ff; font-size: 15px; }
+.goods-option__description, .goods-option__meta { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.goods-option__description { margin-top: 8px; color: #6b7280; font-size: 12px; }
+.goods-option__meta { margin-top: 10px; color: #6b7280; font-size: 11px; }
+.payment-summary { align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #e1e5ea; }
+.payment-summary > div { display: flex; align-items: baseline; gap: 10px; color: #6b7280; font-size: 12px; }
+.payment-summary strong { color: #20242b; font-size: 20px; }
+.payment-loading { padding: 32px 0; text-align: center; }
+.payment-result { min-height: 260px; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; }
+.payment-result__icon { display: grid; width: 52px; height: 52px; border-radius: 50%; place-items: center; color: #fff; background: #faad14; font-size: 28px; }
+.payment-result.is-success .payment-result__icon { background: #52c41a; }
+.payment-result.is-error .payment-result__icon { background: #ff4d4f; }
+.payment-result .ant-typography { margin: 0; }
+.dark .goods-option { border-color: #2d333c; background: #1b1f26; color: #f3f4f6; }
+.dark .payment-summary { border-color: #2d333c; }
+.dark .payment-summary strong { color: #f3f4f6; }
+@media (max-width: 560px) { .goods-grid { grid-template-columns: 1fr; } .payment-intro { flex-direction: column; } .payment-summary { align-items: stretch; flex-direction: column; } .payment-summary .ant-btn { width: 100%; } }
+
 .workspace-context-panel {
   flex-shrink: 0;
   margin-bottom: 10px;

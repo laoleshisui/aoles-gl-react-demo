@@ -17,6 +17,7 @@ import {
   RobotOutlined,
   SafetyCertificateOutlined,
   SunOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
 import {
   usePageState,
@@ -53,7 +54,18 @@ import ExportButton from './components/ExportButton';
 import DraftManagerDialog from './components/DraftManagerDialog';
 import WorkspaceContextPanel from './components/WorkspaceContextPanel';
 import SkillMarketplaceDialog from './components/SkillMarketplaceDialog';
+import PaymentPanel from './components/PaymentPanel';
 import './App.css';
+
+function restoreBearerSession() {
+  try {
+    const value = sessionStorage.getItem('aoles-react-bearer-session');
+    const session = value ? JSON.parse(value) as { accessToken?: string; refreshToken?: string } : undefined;
+    return session?.accessToken ? session : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 function AppContent() {
   const { message } = AntdApp.useApp();
@@ -63,7 +75,10 @@ function AppContent() {
   const [aiOpen, setAiOpen] = useState(true);
   const [healthCheckOpen, setHealthCheckOpen] = useState(false);
   const [skillMarketplaceOpen, setSkillMarketplaceOpen] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const restoredSession = useMemo(() => restoreBearerSession(), []);
+  const [apiKey, setApiKey] = useState(restoredSession?.accessToken ?? '');
+  const [authorizationScheme, setAuthorizationScheme] = useState<'Bearer' | 'Api-Key'>(restoredSession ? 'Bearer' : 'Api-Key');
+  const [paymentOpen, setPaymentOpen] = useState(() => window.location.pathname.includes('/payment/result'));
   const [workspaceId, setWorkspaceId] = useState('');
   const [workspaceName, setWorkspaceName] = useState('');
   const [workspaceRole, setWorkspaceRole] = useState('');
@@ -82,9 +97,11 @@ function AppContent() {
   const [cloudArtifactsLoading, setCloudArtifactsLoading] = useState(false);
   const [cloudArtifactsError, setCloudArtifactsError] = useState('');
   const apiKeyRef = useRef(apiKey);
+  const authorizationSchemeRef = useRef(authorizationScheme);
   const resourcesRef = useRef(resources);
 
   apiKeyRef.current = apiKey;
+  authorizationSchemeRef.current = authorizationScheme;
   resourcesRef.current = resources;
 
   const resourceResolver = useMemo(() => async (
@@ -110,9 +127,32 @@ function AppContent() {
   const aiEnabled = Boolean(agentBaseUrl);
   const aiAuthenticated = Boolean(apiKey);
   const apiKeyAuthClient = useMemo<AolesAuthClient>(() => ({
-    async sendCode() { throw new Error('当前 Demo 仅启用 API Key 登录'); },
+    async sendCode({ phone }) {
+      if (!dataServerBaseUrl) throw new Error('未配置数据服务地址');
+      const response = await fetch(`${dataServerBaseUrl}/aauth/sms/send/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      const payload = await response.json().catch(() => ({})) as Record<string, any>;
+      if (!response.ok) throw new Error(payload.error ?? payload.detail ?? payload.message ?? `请求失败（${response.status}）`);
+    },
     async loginPassword() { throw new Error('当前 Demo 仅启用 API Key 登录'); },
-    async loginSms() { throw new Error('当前 Demo 仅启用 API Key 登录'); },
+    async loginSms({ phone, code }) {
+      if (!dataServerBaseUrl) throw new Error('未配置数据服务地址');
+      const response = await fetch(`${dataServerBaseUrl}/aauth/phone-register-user/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, verification_code: code }),
+      });
+      const payload = await response.json().catch(() => ({})) as Record<string, any>;
+      if (!response.ok) throw new Error(payload.error ?? payload.detail ?? payload.message ?? `请求失败（${response.status}）`);
+      return {
+        ...payload,
+        accessToken: payload.access_token ?? payload.access,
+        refreshToken: payload.refresh_token ?? payload.refresh,
+      };
+    },
     async loginApiKey({ apiKey: value }) {
       if (dataServerBaseUrl) {
         const response = await fetch(`${dataServerBaseUrl}/api-keys/validate-header/`, {
@@ -123,6 +163,56 @@ function AppContent() {
       return { accessToken: value };
     },
   }), [dataServerBaseUrl]);
+
+  const handleAuthSuccess = ({ accessToken, refreshToken }: { accessToken: string; refreshToken?: string }) => {
+    setAuthorizationScheme(refreshToken ? 'Bearer' : 'Api-Key');
+    setApiKey(accessToken);
+    if (refreshToken) sessionStorage.setItem('aoles-react-bearer-session', JSON.stringify({ accessToken, refreshToken }));
+    else sessionStorage.removeItem('aoles-react-bearer-session');
+  };
+
+  const handleSocialLogin = (provider: string) => {
+    if (provider !== 'wechat') return;
+    if (!dataServerBaseUrl) {
+      void message.error('未配置数据服务地址');
+      return;
+    }
+    window.location.assign(`${dataServerBaseUrl}/aauth/oauth/wechat/start/`);
+  };
+
+  useEffect(() => {
+    if (!window.location.pathname.includes('/auth/wechat/callback')) return;
+    const url = new URL(window.location.href);
+    const ticket = url.searchParams.get('ticket');
+    if (!ticket) {
+      void message.error('微信登录票据缺失或已过期');
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        if (!dataServerBaseUrl) throw new Error('未配置数据服务地址');
+        const response = await fetch(`${dataServerBaseUrl}/aauth/oauth/wechat/exchange/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticket }),
+        });
+        const payload = await response.json().catch(() => ({})) as Record<string, any>;
+        if (!response.ok) throw new Error(payload.error || payload.detail || payload.message || '微信登录失败');
+        const accessToken = payload.access_token || payload.access;
+        const refreshToken = payload.refresh_token || payload.refresh;
+        if (!accessToken) throw new Error('微信登录未返回访问令牌');
+        if (!cancelled) {
+          handleAuthSuccess({ accessToken, refreshToken });
+          window.history.replaceState({}, '', `${url.origin}${url.pathname}`);
+          void message.success('微信登录成功');
+        }
+      } catch (error) {
+        if (!cancelled) void message.error(error instanceof Error ? error.message : '微信登录失败');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [dataServerBaseUrl, message]);
   const aiEndpoint = agentBaseUrl.endsWith('/api/chat')
     ? agentBaseUrl
     : `${agentBaseUrl}/api/chat`;
@@ -131,7 +221,7 @@ function AppContent() {
     const options = {
       baseUrl: dataServerBaseUrl,
       getAccessToken: () => apiKeyRef.current,
-      authorizationScheme: 'Api-Key' as const,
+      authorizationScheme,
     };
     return {
       remote: createDraftHttpAdapter(options),
@@ -186,7 +276,7 @@ function AppContent() {
     const options = {
       baseUrl: dataServerBaseUrl,
       getAccessToken: () => apiKeyRef.current,
-      authorizationScheme: 'Api-Key' as const,
+      authorizationScheme,
     };
     void createWorkspaceRepository(options).ensurePersonal().then(async workspace => {
       if (cancelled) return;
@@ -227,7 +317,7 @@ function AppContent() {
       if (!cancelled) void message.warning(`数据服务连接失败：${error instanceof Error ? error.message : String(error)}`);
     });
     return () => { cancelled = true; };
-  }, [apiKey, dataServerBaseUrl, legacyProjectId, message, migrateProject]);
+  }, [apiKey, authorizationScheme, dataServerBaseUrl, legacyProjectId, message, migrateProject]);
 
   const loadCloudArtifacts = async () => {
     if (!workspaceId || !projectId || !artifactRepository) {
@@ -356,7 +446,7 @@ function AppContent() {
     storageKey: 'aoles-gl-react-demo:ai-sessions',
     showModelProfileSelector: true,
     headers: (): HeadersInit => apiKeyRef.current
-      ? { Authorization: `Api-Key ${apiKeyRef.current}` }
+      ? { Authorization: `${authorizationSchemeRef.current} ${apiKeyRef.current}` }
       : {},
     ...(workspaceId && artifactRepository && shaderLibraryRepository ? {
       shaderDesign: {
@@ -403,7 +493,7 @@ function AppContent() {
         void message.error(`AI 请求失败：${errorMessage}`);
       }
     },
-  }), [aiEndpoint, message, workspaceId, artifactRepository, shaderLibraryRepository]);
+  }), [aiEndpoint, authorizationScheme, message, workspaceId, artifactRepository, shaderLibraryRepository]);
 
   return (
     <div className={`editor-root ${isDark ? 'dark' : ''}`}>
@@ -474,6 +564,7 @@ function AppContent() {
           >
             AI 助手
           </Button>
+          <Button size="small" icon={<WalletOutlined />} onClick={() => setPaymentOpen(true)}>购买服务</Button>
 
           <button
             onClick={() => setIsDark(!isDark)}
@@ -518,7 +609,8 @@ function AppContent() {
         <HealthCheckPanel />
       </Modal>
 
-      <SkillMarketplaceDialog open={skillMarketplaceOpen} dataServerBaseUrl={dataServerBaseUrl} apiKey={apiKey} onClose={() => setSkillMarketplaceOpen(false)} />
+      <SkillMarketplaceDialog open={skillMarketplaceOpen} dataServerBaseUrl={dataServerBaseUrl} apiKey={apiKey} authorizationScheme={authorizationScheme} onClose={() => setSkillMarketplaceOpen(false)} />
+      <PaymentPanel open={paymentOpen} dataServerBaseUrl={dataServerBaseUrl} accessToken={apiKey} authorizationScheme={authorizationScheme} onClose={() => setPaymentOpen(false)} />
 
       {/* Main layout */}
       <div className="main-content">
@@ -563,12 +655,11 @@ function AppContent() {
               <div className="ai-panel-shell">
                 <AolesLogin
                   client={apiKeyAuthClient}
-                  defaultMode="api-key"
-                  modes={['api-key']}
-                  socialProviders={[]}
-                  title="连接 PixoClip AI"
-                  subtitle="使用 API Key 连接 AI 与数据服务"
-                  onSuccess={({ accessToken }) => setApiKey(accessToken)}
+                  defaultMode="sms"
+                  modes={['sms', 'api-key']}
+                  socialProviders={['wechat']}
+                  onSuccess={handleAuthSuccess}
+                  onSocialLogin={handleSocialLogin}
                 />
                 {aiAuthenticated && (
                   <AolesAiPanel config={aiConfig} />
